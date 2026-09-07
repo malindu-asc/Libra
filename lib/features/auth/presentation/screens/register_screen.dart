@@ -3,39 +3,41 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import 'register_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
+    _fullNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _login() {
+  void _createAccount() {
     // TODO: wire to auth use case once the domain/data layers exist.
+    // Sends fullName, email, phoneNumber, password only — never role/
+    // memberId/isActive, those are server-controlled (backend contract §2).
   }
 
-  void _goToForgotPassword() {
-    // TODO: navigate once ForgotPasswordScreen exists.
-  }
-
-  void _goToSignUp() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+  void _goToLogin() {
+    Navigator.of(context).pop();
   }
 
   @override
@@ -61,11 +63,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: AppTextStyles.screenTitle.copyWith(fontSize: 26),
                     children: [
                       TextSpan(
-                        text: 'Welcome ',
+                        text: 'Create ',
                         style: TextStyle(color: AppColors.primary),
                       ),
                       TextSpan(
-                        text: 'Back',
+                        text: 'Account',
                         style: TextStyle(color: AppColors.textHeading),
                       ),
                     ],
@@ -74,22 +76,60 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Log in to continue your reading journey.',
+                  'Sign up to start your reading journey.',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.body.copyWith(
                     color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.section),
-                Text('Email Address', style: AppTextStyles.inputLabel.copyWith(color: AppColors.textPrimary)),
+                const SizedBox(height: AppSpacing.xl),
+                Text(
+                  'Full Name',
+                  style: AppTextStyles.inputLabel.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextField(
+                  controller: _fullNameController,
+                  keyboardType: TextInputType.name,
+                  decoration: const InputDecoration(hintText: 'Jane Doe'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Email Address',
+                  style: AppTextStyles.inputLabel.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(hintText: 'name@example.com'),
+                  decoration: const InputDecoration(
+                    hintText: 'name@example.com',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Text('Password', style: AppTextStyles.inputLabel.copyWith(color: AppColors.textPrimary)),
+                Text(
+                  'Phone Number',
+                  style: AppTextStyles.inputLabel.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(hintText: '0771234567'),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Password',
+                  style: AppTextStyles.inputLabel.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 TextField(
                   controller: _passwordController,
@@ -109,19 +149,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Confirm Password',
+                  style: AppTextStyles.inputLabel.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.sm),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _goToForgotPassword,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'Forgot Password?',
-                      style: AppTextStyles.body.copyWith(color: AppColors.primary),
+                TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  decoration: InputDecoration(
+                    hintText: '••••••••',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppColors.textTertiary,
+                      ),
+                      onPressed: () => setState(
+                        () =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword,
+                      ),
                     ),
                   ),
                 ),
@@ -129,9 +180,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(shape: const StadiumBorder()),
-                    child: const Text('Log In'),
+                    onPressed: _createAccount,
+                    style: ElevatedButton.styleFrom(
+                      shape: const StadiumBorder(),
+                    ),
+                    child: const Text('Create Account'),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -139,13 +192,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
-                      style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                      'Already have an account? ',
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     GestureDetector(
-                      onTap: _goToSignUp,
+                      onTap: _goToLogin,
                       child: Text(
-                        'Sign Up',
+                        'Log In',
                         style: AppTextStyles.body.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w600,
