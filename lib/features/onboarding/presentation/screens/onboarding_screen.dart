@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
 
 class OnboardingPageData {
   const OnboardingPageData({
@@ -52,12 +53,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _skip() {
-    // TODO: replace with the real next route once Login exists.
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
   void _next() {
     if (_isLastPage) {
-      // TODO: replace with the real next route once Login exists.
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
       return;
     }
     _controller.nextPage(

@@ -84,9 +84,9 @@ Auth tokens: `accessToken`, `refreshToken`, `expiresAt` from login/register/refr
 
 Status tracker, ordered per the design doc's screen map (section 60). Check items off as each is implemented; the 17 Stitch screens you linked map onto this list once we can view them (see section 8).
 
-- [ ] Splash
-- [ ] Onboarding (Discover / Borrow / Stay Organized — 3 screens)
-- [ ] Login
+- [x] Splash
+- [x] Onboarding (2 screens implemented: "Expand Knowledge Hub", "Discover Your Next Book" — page count is data-driven, more can be appended anytime)
+- [x] Login (wired after onboarding; Sign Up / Forgot Password links still TODO stubs until those screens exist)
 - [ ] Register (create account)
 - [ ] Forgot password
 - [ ] Home
@@ -125,6 +125,8 @@ Shared component library to build next (design doc §62), each wrapping the them
 
 ## 8. Next step
 
-The 17 Stitch screen paths you pasted (`web application/stitch/projects/.../screens/...`) aren't fetchable as-is — no URL scheme/host. To pull exact layouts from them I need either a real link (e.g. `https://stitch.withgoogle.com/...`) or exported images per screen. Until then I'm building from the detailed screen-by-screen structure already in the design doc (sections 24–41 spell out composition for Splash, Onboarding, Login, Register, Home, Books, Book Details, Borrow flow, My Borrowings, Profile, empty/error states), so we don't have to block on that.
+Splash, Onboarding, and Login are done. Next up per the roadmap: **Register (create account)**.
 
-Recommended build order: **Splash → Login → Home**, since Splash is trivial and confirms the wordmark treatment, and Login/Home exercise the shared button/input/nav components everything else reuses.
+Register reuses the exact same field/button patterns Login just established (text field, password toggle, primary pill button), so it should go quickly. Fields per the backend contract (§2 register endpoint) and the design doc §27: Full Name, Email, Phone Number, Password, Confirm Password — no role/member ID/status fields, those are server-controlled.
+
+After Register: Forgot Password (same components again) → Home.
