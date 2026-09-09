@@ -4,81 +4,72 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../home/presentation/screens/home_screen.dart';
 import '../providers/auth_providers.dart';
-import 'forgot_password_screen.dart';
-import 'register_screen.dart';
 
-//referpod basically has listen,watch and read
-// ref.read = trigger actions tell controller to execute function(no listeinig, or update changes)
-//ref.watch = rebuild the ui's,monitor state changes, force to flutter widget to rebuild.
-//ref.listen- trigger one time action in backgroud
-
-
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
- //login function basically calls relater controller the login usecase and updates the state of the login controller
-  void _login() {
-    ref.read(loginControllerProvider.notifier).submit(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+
+  void _sendResetLink() {
+    ref
+        .read(forgotPasswordControllerProvider.notifier)
+        .submit(email: _emailController.text.trim());
   }
 
-  void _goToForgotPassword() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-    );
-  }
-
-  void _goToSignUp() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+  void _goToLogin() {
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    // trigger in background when state change,wait until controller state finish
-    ref.listen(loginControllerProvider, (previous, next) {
+    ref.listen(forgotPasswordControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, _) => ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(SnackBar(content: Text(error.toString()))),
-        data: (session) {
-          if (session == null) return;
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (_) => HomeScreen(member: session.member),
-            ),
-            (route) => false,
-          );
+        data: (success) {
+          if (!success) return;
+          // Backend always returns the same generic response regardless of
+          // whether the email exists (anti-enumeration) — never "email not
+          // found", and we stay on this screen rather than navigating away.
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'If an account exists for this email, password reset instructions have been sent.',
+                ),
+                duration: Duration(seconds: 5),
+              ),
+            );
         },
       );
     });
 
     final isLoading = ref.watch(
-      loginControllerProvider.select((state) => state.isLoading),
+      forgotPasswordControllerProvider.select((state) => state.isLoading),
     );
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: const BackButton(),
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
@@ -99,11 +90,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: AppTextStyles.screenTitle.copyWith(fontSize: 26),
                       children: [
                         TextSpan(
-                          text: 'Welcome ',
+                          text: 'Forgot ',
                           style: TextStyle(color: AppColors.primary),
                         ),
                         TextSpan(
-                          text: 'Back',
+                          text: 'Password?',
                           style: TextStyle(color: AppColors.textHeading),
                         ),
                       ],
@@ -112,13 +103,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Log in to continue your reading journey.',
+                    "Enter your email address and we'll send you instructions to reset your password.",
                     textAlign: TextAlign.center,
                     style: AppTextStyles.body.copyWith(
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.section),
+                  const SizedBox(height: AppSpacing.xl),
                   Text(
                     'Email Address',
                     style: AppTextStyles.inputLabel.copyWith(
@@ -133,55 +124,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       hintText: 'name@example.com',
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'Password',
-                    style: AppTextStyles.inputLabel.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      hintText: '••••••••',
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: AppColors.textTertiary,
-                        ),
-                        onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _goToForgotPassword,
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'Forgot Password?',
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: AppSpacing.lg),
                   SizedBox(
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: isLoading ? null : _login,
+                      onPressed: isLoading ? null : _sendResetLink,
                       style: ElevatedButton.styleFrom(
                         shape: const StadiumBorder(),
                       ),
@@ -194,7 +141,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: AppColors.onPrimary,
                               ),
                             )
-                          : const Text('Log In'),
+                          : const Text('Send Reset Link'),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -202,15 +149,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Don't have an account? ",
+                        'Remember your password? ',
                         style: AppTextStyles.body.copyWith(
                           color: AppColors.textSecondary,
                         ),
                       ),
                       GestureDetector(
-                        onTap: _goToSignUp,
+                        onTap: _goToLogin,
                         child: Text(
-                          'Sign Up',
+                          'Log In',
                           style: AppTextStyles.body.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,

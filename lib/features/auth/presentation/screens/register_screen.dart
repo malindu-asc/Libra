@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../providers/auth_providers.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -31,9 +33,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _createAccount() {
-    // TODO: wire to auth use case once the domain/data layers exist.
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Passwords do not match.')));
+      return;
+    }
     // Sends fullName, email, phoneNumber, password only — never role/
     // memberId/isActive, those are server-controlled (backend contract §2).
+    ref.read(registerControllerProvider.notifier).submit(
+      fullName: _fullNameController.text.trim(),
+      email: _emailController.text.trim(),
+      phoneNumber: _phoneController.text.trim(),
+      password: _passwordController.text,
+    );
   }
 
   void _goToLogin() {
@@ -41,8 +54,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    ref.listen(registerControllerProvider, (previous, next) {
+      next.whenOrNull(
+        error: (error, _) => ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(error.toString()))),
+        data: (success) {
+          if (!success) return;
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Account created! Please log in.'),
+              ),
+            );
+          Navigator.of(context).pop();
+        },
+      );
+    });
+
+    final isLoading = ref.watch(
+      registerControllerProvider.select((state) => state.isLoading),
+    );
+
+    return Scaffold(
     backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      leading: const BackButton(),
+    ),
     body: SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) => SingleChildScrollView(
@@ -180,11 +222,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _createAccount,
+                    onPressed: isLoading ? null : _createAccount,
                     style: ElevatedButton.styleFrom(
                       shape: const StadiumBorder(),
                     ),
-                    child: const Text('Create Account'),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.onPrimary,
+                            ),
+                          )
+                        : const Text('Create Account'),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -215,5 +266,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     ),
-  );
+    );
+  }
 }

@@ -4,6 +4,8 @@ Flutter app (Riverpod + fpdart, clean/feature-based architecture) for a library 
 
 Product/brand name shown in the app is **Libzo** (per the design system doc); the Dart package and repo stay named `libra` — renaming the package is a separate, mechanical decision if we ever want it.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for diagrams of how the built pieces actually connect at runtime (layer flow, sequence diagrams, navigation map) — this file tracks *what* to build, that one tracks *how* it works, updated as each feature gets wired.
+
 ## 1. How we'll work
 
 This is a UI-first, screen-by-screen build:
@@ -87,8 +89,8 @@ Status tracker, ordered per the design doc's screen map (section 60). Check item
 - [x] Splash
 - [x] Onboarding (2 screens implemented: "Expand Knowledge Hub", "Discover Your Next Book" — page count is data-driven, more can be appended anytime)
 - [x] Login (wired after onboarding; Sign Up / Forgot Password links still TODO stubs until those screens exist)
-- [ ] Register (create account)
-- [ ] Forgot password
+- [x] Register (create account) — Login↔Register wired with push/pop (siblings, not a one-way flow); back arrow added
+- [x] Forgot password
 - [ ] Home
 - [ ] Books (browse/search)
 - [ ] Book details
@@ -123,10 +125,22 @@ Shared component library to build next (design doc §62), each wrapping the them
 
 `pubspec.yaml` requires Dart `^3.13.1`; the globally installed Flutter here is 3.44.4 (Dart 3.12.2), so plain `flutter pub get` fails. The repo already pins Flutter `3.47.1` via `.fvmrc`, matching `CleanArchitectureDemo` — use `fvm flutter ...` for all commands once FVM has the pinned SDK installed (`fvm install`, then `fvm flutter pub get`).
 
-## 8. Next step
+## 8. Auth logic — wired
 
-Splash, Onboarding, and Login are done. Next up per the roadmap: **Register (create account)**.
+Splash, Onboarding, Login, Register, and Forgot Password are all built. Beyond that, `auth` now has real (mock) logic behind it, following the exact layering from `CleanArchitectureDemo`'s `book` feature:
 
-Register reuses the exact same field/button patterns Login just established (text field, password toggle, primary pill button), so it should go quickly. Fields per the backend contract (§2 register endpoint) and the design doc §27: Full Name, Email, Phone Number, Password, Confirm Password — no role/member ID/status fields, those are server-controlled.
+- `domain/entities/` — `Member`, `AuthSession`
+- `domain/repositories/auth_repository.dart` — interface
+- `domain/usecases/` — `Login`, `Register`, `ForgotPassword`, each `UseCase<T, Params>` returning `Either<Failure, T>`
+- `data/models/` — `MemberModel`/`AuthSessionModel` (extend the domain entities, `fromJson` ready for the real API swap)
+- `data/datasources/auth_local_datasource.dart` — **mock** datasource: simulates network delay, does basic validation, fake-succeeds. This is the one piece that gets swapped for real HTTP later — nothing above it changes.
+- `data/repositories/auth_repository_impl.dart` — catches datasource exceptions, converts to `Failure`
+- `presentation/providers/auth_providers.dart` — manual Riverpod providers + an `AsyncNotifier` controller per screen (no `build_runner`/codegen needed for this)
 
-After Register: Forgot Password (same components again) → Home.
+Login/Register/Forgot Password screens now show real loading spinners (in the button) and error snackbars, and Login/Register navigate on success. Since the real Home screen doesn't exist yet, added a minimal placeholder (`features/home/presentation/screens/home_screen.dart`) — successful login/register lands there via `pushAndRemoveUntil` (clears the whole stack, so back doesn't return to Login).
+
+`flutter analyze`: 0 issues.
+
+## 9. Next step
+
+**Home** — the real designed screen, replacing the placeholder. This is a bigger milestone since it introduces the bottom navigation shell that Books/Borrowings/Profile all hang off of. Send the Home screenshot when ready.

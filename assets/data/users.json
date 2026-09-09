@@ -1,0 +1,16 @@
+[
+  {
+    "id": "member-001",
+    "fullName": "Malindu P",
+    "email": "malindu@example.com",
+    "phoneNumber": "0771234567",
+    "password": "Password123!"
+  },
+  {
+    "id": "member-002",
+    "fullName": "Test Smith",
+    "email": "test@example.com",
+    "phoneNumber": "0779876543",
+    "password": "Password123!"
+  }
+]
