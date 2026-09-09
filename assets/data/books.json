@@ -1,0 +1,68 @@
+[
+  {
+    "id": "book-001",
+    "title": "Prince of the Witch",
+    "author": "Marcus Fenwick",
+    "isbn": "9780000000101",
+    "publishedYear": 2021,
+    "totalCopies": 4,
+    "availableCopies": 2,
+    "description": "A dark fantasy tale of a cursed prince and the witch who bound him.",
+    "coverImageUrl": "assets/images/books/b1.jpg"
+  },
+  {
+    "id": "book-002",
+    "title": "Dragon Hunt",
+    "author": "Rowan Ashcombe",
+    "isbn": "9780000000102",
+    "publishedYear": 2019,
+    "totalCopies": 5,
+    "availableCopies": 3,
+    "description": "A band of hunters chase the last dragon across a dying kingdom.",
+    "coverImageUrl": "assets/images/books/b2.jpg"
+  },
+  {
+    "id": "book-003",
+    "title": "Last Man",
+    "author": "Dominic Voss",
+    "isbn": "9780000000103",
+    "publishedYear": 2020,
+    "totalCopies": 3,
+    "availableCopies": 1,
+    "description": "A lone survivor searches for others after a global catastrophe.",
+    "coverImageUrl": "assets/images/books/b3.jpg"
+  },
+  {
+    "id": "book-004",
+    "title": "The Subtle Art of Not Giving a F*ck",
+    "author": "Mark Manson",
+    "isbn": "9780062457714",
+    "publishedYear": 2016,
+    "totalCopies": 6,
+    "availableCopies": 4,
+    "description": "A counterintuitive approach to living a good life.",
+    "coverImageUrl": "assets/images/books/b4.png"
+  },
+  {
+    "id": "book-005",
+    "title": "Rich Dad Poor Dad",
+    "author": "Robert Kiyosaki",
+    "isbn": "9781612680194",
+    "publishedYear": 1997,
+    "totalCopies": 7,
+    "availableCopies": 5,
+    "description": "What the rich teach their kids about money that the poor and middle class do not.",
+    "coverImageUrl": "assets/images/books/b5.jpg"
+  },
+  {
+    "id": "book-006",
+    "title": "The Power of Habit",
+    "author": "Charles Duhigg",
+    "isbn": "9780812981605",
+    "publishedYear": 2012,
+    "totalCopies": 6,
+    "availableCopies": 6,
+    "description": "Why we do what we do in life and business.",
+    "coverImageUrl": "assets/images/books/b6.jpg"
+  }
+]
