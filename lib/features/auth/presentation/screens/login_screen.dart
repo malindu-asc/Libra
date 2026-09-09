@@ -23,6 +23,9 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -35,6 +38,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
  //login function basically calls relater controller the login usecase and updates the state of the login controller
   void _login() {
+    if (!_formKey.currentState!.validate()) return;
     ref.read(loginControllerProvider.notifier).submit(
       email: _emailController.text.trim(),
       password: _passwordController.text,
@@ -90,7 +94,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               constraints: BoxConstraints(
                 minHeight: constraints.maxHeight - AppSpacing.xl * 2,
               ),
-              child: Column(
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -126,12 +133,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  TextField(
+                  TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       hintText: 'name@example.com',
                     ),
+                    validator: (value) {
+                      final email = value?.trim() ?? '';
+                      if (email.isEmpty) return 'Email is required';
+                      if (!_emailPattern.hasMatch(email)) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
@@ -141,7 +156,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  TextField(
+                  TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
@@ -158,6 +173,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Password is required';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Align(
@@ -220,6 +241,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
                 ],
+                ),
               ),
             ),
           ),

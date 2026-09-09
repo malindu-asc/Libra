@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../auth/domain/entities/member.dart';
+import '../../../auth/domain/entities/authenticated_member.dart';
 
 /// Placeholder — swapped for the real designed Home screen (with bottom nav
 /// shell) once that Figma screen is provided. Exists now so the auth flow
@@ -11,7 +11,7 @@ import '../../../auth/domain/entities/member.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({required this.member, super.key});
 
-  final Member member;
+  final AuthenticatedMember member;
 
   @override
   Widget build(BuildContext context) => Scaffold(
