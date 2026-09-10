@@ -1,6 +1,4 @@
-import 'dart:async';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -9,48 +7,54 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/forgot_password.dart';
 import '../../domain/usecases/login.dart';
 import '../../domain/usecases/register.dart';
+import 'current_member_provider.dart';
 
-final authLocalDataSourceProvider = Provider<AuthLocalDataSource>(
-  (ref) => AuthLocalDatasourceImpl(),
-);
+part 'auth_providers.g.dart';
 
-final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AuthRepositoryImpl(ref.watch(authLocalDataSourceProvider)),
-);
+@Riverpod(keepAlive: true)
+AuthLocalDataSource authLocalDataSource(Ref ref) => AuthLocalDatasourceImpl();
 
-final loginUseCaseProvider = Provider<Login>(
-  (ref) => Login(ref.watch(authRepositoryProvider)),
-);
+@Riverpod(keepAlive: true)
+AuthRepository authRepository(Ref ref) =>
+    AuthRepositoryImpl(ref.watch(authLocalDataSourceProvider));
 
-final registerUseCaseProvider = Provider<Register>(
-  (ref) => Register(ref.watch(authRepositoryProvider)),
-);
+@riverpod
+Login loginUseCase(Ref ref) => Login(ref.watch(authRepositoryProvider));
 
-final forgotPasswordUseCaseProvider = Provider<ForgotPassword>(
-  (ref) => ForgotPassword(ref.watch(authRepositoryProvider)),
-);
+@riverpod
+Register registerUseCase(Ref ref) =>
+    Register(ref.watch(authRepositoryProvider));
 
-/// `state.value` is null until a login attempt succeeds.
-class LoginController extends AsyncNotifier<AuthSession?> {
+@riverpod
+ForgotPassword forgotPasswordUseCase(Ref ref) =>
+    ForgotPassword(ref.watch(authRepositoryProvider));
+
+@riverpod
+class LoginController extends _$LoginController {
   @override
   FutureOr<AuthSession?> build() => null;
 
-  Future<void> submit({required String email, required String password}) async {
+  Future<void> submit({
+    required String email,
+    required String password,
+  }) async {
     state = const AsyncLoading();
     final useCase = ref.read(loginUseCaseProvider);
-    final result = await useCase(LoginParams(email: email, password: password));
+    final result = await useCase(
+      LoginParams(email: email, password: password),
+    );
     state = result.match(
       (failure) => AsyncError(failure.message, StackTrace.current),
-      (session) => AsyncData(session),
+      (session) {
+        ref.read(currentMemberProvider.notifier).set(session.member);
+        return AsyncData(session);
+      },
     );
   }
 }
 
-final loginControllerProvider =
-    AsyncNotifierProvider<LoginController, AuthSession?>(LoginController.new);
-
-/// `state.value` is true once registration succeeds.
-class RegisterController extends AsyncNotifier<bool> {
+@riverpod
+class RegisterController extends _$RegisterController {
   @override
   FutureOr<bool> build() => false;
 
@@ -77,12 +81,8 @@ class RegisterController extends AsyncNotifier<bool> {
   }
 }
 
-final registerControllerProvider =
-    AsyncNotifierProvider<RegisterController, bool>(RegisterController.new);
-
-/// `state.value` is true once the request has gone through — the backend
-/// always responds the same way regardless of whether the email exists.
-class ForgotPasswordController extends AsyncNotifier<bool> {
+@riverpod
+class ForgotPasswordController extends _$ForgotPasswordController {
   @override
   FutureOr<bool> build() => false;
 
@@ -96,8 +96,3 @@ class ForgotPasswordController extends AsyncNotifier<bool> {
     );
   }
 }
-
-final forgotPasswordControllerProvider =
-    AsyncNotifierProvider<ForgotPasswordController, bool>(
-      ForgotPasswordController.new,
-    );

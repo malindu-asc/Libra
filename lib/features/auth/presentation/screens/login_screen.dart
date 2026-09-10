@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../home/presentation/screens/home_screen.dart';
+import '../../../../core/widgets/main_shell.dart';
 import '../providers/auth_providers.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
@@ -69,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           if (session == null) return;
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-              builder: (_) => HomeScreen(member: session.member),
+              builder: (_) => MainShell(member: session.member),
             ),
             (route) => false,
           );
