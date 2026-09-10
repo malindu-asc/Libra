@@ -7,8 +7,9 @@
     "publishedYear": 2021,
     "totalCopies": 4,
     "availableCopies": 2,
-    "description": "A dark fantasy tale of a cursed prince and the witch who bound him.",
-    "coverImageUrl": "assets/images/books/b1.jpg"
+    "description": "A dark fantasy tale of a cursed prince and the witch who bound him. Betrayed by his own kingdom, Prince Aldric seeks the one power capable of breaking his curse - a bond with the witch history remembers as his greatest enemy.\n\nAs ancient magic stirs and old alliances crumble, both must decide whether trust is worth the cost of everything they once believed. Set across three warring kingdoms, this is a story about power, sacrifice, and the blurred line between salvation and ruin.",
+    "coverImageUrl": "assets/images/books/b1.jpg",
+    "pages": 312
   },
   {
     "id": "book-002",
@@ -18,8 +19,9 @@
     "publishedYear": 2019,
     "totalCopies": 5,
     "availableCopies": 3,
-    "description": "A band of hunters chase the last dragon across a dying kingdom.",
-    "coverImageUrl": "assets/images/books/b2.jpg"
+    "description": "A band of hunters chase the last dragon across a dying kingdom. When the sightings begin again after a century of silence, the Crown assembles an unlikely company to end what myths call unkillable.\n\nEach hunter carries a reason to finish the hunt and a secret that could unravel the group long before they ever find their prey. A story about obsession, legacy, and what's really worth chasing.",
+    "coverImageUrl": "assets/images/books/b2.jpg",
+    "pages": 288
   },
   {
     "id": "book-003",
@@ -29,8 +31,9 @@
     "publishedYear": 2020,
     "totalCopies": 3,
     "availableCopies": 1,
-    "description": "A lone survivor searches for others after a global catastrophe.",
-    "coverImageUrl": "assets/images/books/b3.jpg"
+    "description": "A lone survivor searches for others after a global catastrophe. Six months after the silence fell, Mara has stopped expecting to find anyone - until a signal she can't explain leads her toward a city she was told no longer exists.\n\nPart survival story, part mystery, this is a quiet, unflinching look at what's left of a person when everything else is gone.",
+    "coverImageUrl": "assets/images/books/b3.jpg",
+    "pages": 340
   },
   {
     "id": "book-004",
@@ -40,8 +43,9 @@
     "publishedYear": 2016,
     "totalCopies": 6,
     "availableCopies": 4,
-    "description": "A counterintuitive approach to living a good life.",
-    "coverImageUrl": "assets/images/books/b4.png"
+    "description": "A counterintuitive approach to living a good life. Manson argues that the constant pursuit of positivity is itself a form of avoidance, and that a more fulfilling life comes from confronting, not suppressing, life's problems.\n\nDrawing on psychology and blunt personal anecdotes, the book challenges readers to choose their struggles deliberately rather than chase an endless stream of good feelings.",
+    "coverImageUrl": "assets/images/books/b4.png",
+    "pages": 224
   },
   {
     "id": "book-005",
@@ -51,8 +55,9 @@
     "publishedYear": 1997,
     "totalCopies": 7,
     "availableCopies": 5,
-    "description": "What the rich teach their kids about money that the poor and middle class do not.",
-    "coverImageUrl": "assets/images/books/b5.jpg"
+    "description": "What the rich teach their kids about money that the poor and middle class do not. Through the contrasting lessons of his own father and a friend's father, Kiyosaki lays out a framework for thinking about assets, liabilities, and financial independence.\n\nThe book argues that traditional schooling leaves most people financially unprepared, and that building real wealth requires a different way of thinking about money entirely.",
+    "coverImageUrl": "assets/images/books/b5.jpg",
+    "pages": 336
   },
   {
     "id": "book-006",
@@ -62,7 +67,8 @@
     "publishedYear": 2012,
     "totalCopies": 6,
     "availableCopies": 6,
-    "description": "Why we do what we do in life and business.",
-    "coverImageUrl": "assets/images/books/b6.jpg"
+    "description": "Why we do what we do in life and business. Duhigg explores the science behind why habits form and how they can be deliberately changed, drawing on case studies from individuals, companies, and entire communities.\n\nAt the center is the idea of the habit loop - cue, routine, reward - and how understanding it is the key to reshaping behavior that seems otherwise stuck.",
+    "coverImageUrl": "assets/images/books/b6.jpg",
+    "pages": 371
   }
 ]
