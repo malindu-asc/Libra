@@ -91,19 +91,19 @@ Status tracker, ordered per the design doc's screen map (section 60). Check item
 - [x] Login (wired after onboarding; Sign Up / Forgot Password links still TODO stubs until those screens exist)
 - [x] Register (create account) — Login↔Register wired with push/pop (siblings, not a one-way flow); back arrow added
 - [x] Forgot password
-- [ ] Home
-- [ ] Books (browse/search)
-- [ ] Book details
-- [ ] Borrow confirmation (bottom sheet)
-- [ ] Borrow success
-- [ ] My Borrowings — Active
-- [ ] My Borrowings — History
-- [ ] Return confirmation
-- [ ] Return success
+- [x] Home (real dashboard — greeting, search bar stub, My Borrowings carousel, Recommended row backed by the new `books` feature)
+- [x] Books — domain/data/presentation layers (mirrors `CleanArchitectureDemo`'s own `book` feature) + the Books tab screen itself (2-column grid, client-side search/filter, §30) + a shared `BookCard` widget reused by both this screen and Home's Recommended row
+- [x] Book details — `GetBookById` usecase + `bookByIdProvider(id)` family provider; tappable from both the Books grid and Home's Recommended row. Borrow button correctly disabled when `availableCopies == 0`
+- [x] Borrow confirmation (bottom sheet) — book summary, borrow/due dates (real 14-day calc), active-borrowings count; "Confirm Borrow" calls the real `BorrowBook` usecase against the `borrowings` feature (§10)
+- [x] Borrow success — not a separate screen; the confirmation sheet swaps its own body in place (checkmark, "Book Borrowed!", "View My Borrowings"/"Back to Home") once the borrow succeeds
+- [x] My Borrowings — Active
+- [x] My Borrowings — History — same screen as Active, a segmented Active/History switch, not two separate screens
+- [x] Return confirmation (bottom sheet) — book summary + borrowed/due dates; "Confirm Return" calls the real `ReturnBook` usecase, which restores the book's `availableCopies` and stamps `returnedAt`
+- [x] Return success — same in-place sheet swap as Borrow success ("Book Returned!" + Done)
 - [ ] Profile
 - [ ] Edit profile
 - [ ] Change password
-- [ ] Shared: bottom navigation shell, empty states, loading skeletons, error states, toasts
+- [x] Shared: bottom navigation shell (`MainShell`, Material 3 `NavigationBar`), `AppEmptyState`/`AppErrorState` — loading skeletons and toasts still not built (plain spinners/SnackBars used instead)
 
 ## 6. Design system — implemented
 
@@ -123,7 +123,7 @@ Shared component library to build next (design doc §62), each wrapping the them
 
 ## 7. Toolchain note
 
-`pubspec.yaml` requires Dart `^3.13.1`; the globally installed Flutter here is 3.44.4 (Dart 3.12.2), so plain `flutter pub get` fails. The repo already pins Flutter `3.47.1` via `.fvmrc`, matching `CleanArchitectureDemo` — use `fvm flutter ...` for all commands once FVM has the pinned SDK installed (`fvm install`, then `fvm flutter pub get`).
+`pubspec.yaml` requires Dart `^3.13.1`; the globally installed Flutter here is 3.44.4 (Dart 3.12.2), so plain `flutter pub get` fails. The repo pins Flutter `3.47.2` (Dart 3.13.2, latest stable as of 2026-09-09) via `.fvmrc` — use `fvm flutter ...` for all commands, or call `./.fvm/versions/3.47.2/bin/flutter.bat` directly if the `fvm` wrapper itself isn't on `PATH` in a given shell.
 
 ## 8. Auth logic — wired
 
@@ -141,6 +141,31 @@ Login/Register/Forgot Password screens now show real loading spinners (in the bu
 
 `flutter analyze`: 0 issues.
 
-## 9. Next step
+## 9. Borrowings logic — wired
 
-**Home** — the real designed screen, replacing the placeholder. This is a bigger milestone since it introduces the bottom navigation shell that Books/Borrowings/Profile all hang off of. Send the Home screenshot when ready.
+`borrowings` now has real (mock) logic, same layering as `auth`/`books`:
+
+- `domain/entities/borrowing.dart` — `Borrowing` (schema-pure: `id`, `bookId`, `memberId`, `borrowedAt`, `dueDate`, nullable `returnedAt`; computed `status`/`daysLeft`), `BorrowingRecordStatus` (`borrowed`/`returned`/`overdue`), `BorrowingStatus` (`active`/`history` — the query filter, a different axis from record status)
+- `domain/usecases/` — `GetBorrowings`, `BorrowBook` (`bookId` only, matches `POST /api/borrowings`'s real body)
+- `data/datasources/borrowing_local_datasource.dart` — **the first stateful mock**: an in-memory `List<BorrowingModel>` that persists for the session. Enforces the 3-active-borrowings limit and book availability, decrements the book's `availableCopies` via `BookLocalDataSource` (which had to become stateful/cached too — see ARCHITECTURE.md §5), and scopes every read/write to whoever's currently logged in
+- `auth/presentation/providers/current_member_provider.dart` — new: a `keepAlive` session provider holding the logged-in `AuthenticatedMember`, set on login success. Needed so `borrowings` can stamp `memberId` without any screen threading it through manually
+- `presentation/providers/borrowings_providers.dart` — since `Borrowing` only carries `bookId`, both `activeBorrowingsPreviewProvider` (Home's carousel / the confirmation sheet) and `borrowingListProvider` (My Borrowings, family by `BorrowingStatus`) do a real two-stage fetch: get the borrowings, then `Future.wait` over `GetBookById` for every referenced book, concurrently
+- Screens: `BorrowConfirmationSheet` (stateful — swaps to an in-place success view after a real borrow) and `MyBorrowingsScreen` (segmented Active/History switch, per-card status badge)
+
+`ReturnBook` is now built too — `returnBorrowing` restores the book's `availableCopies`, stamps `returnedAt`, and the record moves from the Active tab to History.
+
+## 10. Members logic — layer built, no UI yet
+
+`members` has its full domain/data/presentation-provider stack, but **no screens** — Profile/Edit Profile/Change Password are still unbuilt, and `MainShell`'s Profile tab is a placeholder.
+
+- `domain/entities/member.dart` — `Member`, schema-pure: `id`, `fullName`, `email`, `phoneNumber`, `registeredDate`, `isActive`. Its own class, separate from `auth`'s `AuthenticatedMember` ("who logged in" vs. "the editable profile")
+- `domain/usecases/` — `GetMyProfile`, `UpdateMyProfile` (`fullName`/`email`/`phoneNumber` only — no `id`, `registeredDate` or `isActive`, per §4's no-client-sent-fields rule), `ChangePassword`
+- `data/datasources/member_local_datasource.dart` — stateful mock, same shape as borrowings': caches `users.json` in memory so edits survive the session, reads the logged-in id from `currentMemberProvider`, verifies the old password on change
+- `assets/data/users.json` — gained `registeredDate` and `isActive` to complete the schema
+- `presentation/providers/member_providers.dart` — `myProfileProvider` plus `UpdateProfileController`/`ChangePasswordController`. A successful profile update also refreshes `currentMemberProvider`, so Home's greeting reflects a name change immediately
+
+Known mock limitation: this datasource caches `users.json` separately from `auth`'s, so *change password → log out → log back in with the new password* would fail. Not reachable yet (no logout exists); needs resolving when one is added.
+
+## 11. Next step
+
+Borrow and return both work end to end. What's left: the three `members` screens (Profile, Edit Profile, Change Password) + wiring the Profile tab, **Logout** (nothing calls `currentMemberProvider.clear()` today — no usecase, no button), and auth's remaining `refresh`/`reset-password` endpoints.

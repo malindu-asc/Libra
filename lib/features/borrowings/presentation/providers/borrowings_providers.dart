@@ -21,7 +21,7 @@ BorrowingLocalDataSource borrowingLocalDataSource(Ref ref) =>
       () => ref.read(currentMemberProvider)?.id,
     );
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true) // keepwithout dispose
 BorrowingRepository borrowingRepository(Ref ref) =>
     BorrowingRepositoryImpl(ref.watch(borrowingLocalDataSourceProvider));
 

@@ -172,7 +172,9 @@ Register and Forgot Password follow the identical shape (`RegisterController`, `
 | [`assets/data/books.json`](assets/data/books.json) | data (asset) | 6 sample books — same pattern as `CleanArchitectureDemo`'s `assets/data/books.json`, and as `auth`'s `users.json` |
 | [`data/repositories/book_repository_impl.dart`](lib/features/books/data/repositories/book_repository_impl.dart) | data | Catches datasource exceptions, converts to `Failure` |
 | [`presentation/providers/book_providers.dart`](lib/features/books/presentation/providers/book_providers.dart) + generated `.g.dart` | presentation | Codegen (`@riverpod`) — wires datasource → repository → usecase, exposes `bookListProvider` (`AsyncNotifier<List<Book>>`) |
-| [`presentation/widgets/book_card.dart`](lib/features/books/presentation/widgets/book_card.dart) | presentation | `BookCard` — shared between the Books grid and Home's Recommended row (`showAvailability` toggles the chip) |
+| [`presentation/widgets/book_card.dart`](lib/features/books/presentation/widgets/book_card.dart) | presentation | `BookCard` — shared between the Books grid and Home's Recommended row (`showAvailability` toggles the chip), now also tappable (`onTap`) |
+| [`domain/usecases/get_book_by_id.dart`](lib/features/books/domain/usecases/get_book_by_id.dart) | domain | `GetBookById` — calls `repository.getBookById(id)`, matches `GetBooks`'s shape |
+| [`presentation/screens/book_details_screen.dart`](lib/features/books/presentation/screens/book_details_screen.dart) | presentation | `ConsumerWidget` — takes only a `bookId` (never the whole `Book`), watches `bookByIdProvider(bookId)` (a **family** provider — one provider instance per id) |
 
 This mirrors `CleanArchitectureDemo`'s own `book` feature almost file-for-file — the closest parity of anything built so far, since that demo's entire purpose is this exact feature. Only real deviation: `id` is `String` (matches our backend contract's UUID shape) instead of the demo's `int`.
 
@@ -211,7 +213,7 @@ Every arrow here only ever points toward `domain` (same rule as `auth`'s trace, 
 
 ## 4. Feature: `home` dashboard (built)
 
-Real dashboard, not a placeholder — greeting, search bar (decorative for now, no destination), a "My Borrowings" carousel, and a "Recommended" row backed by the real `books` feature.
+Real dashboard, not a placeholder — greeting, a search bar that switches to the Books tab, a "My Borrowings" carousel, and a "Recommended" row backed by the real `books` feature.
 
 **Key design decision — `home` owns a small local model for the borrowings preview, not a shared `Borrowing` entity:**
 
@@ -220,12 +222,12 @@ Real dashboard, not a placeholder — greeting, search bar (decorative for now, 
 | [`presentation/models/active_borrowing_preview.dart`](lib/features/home/presentation/models/active_borrowing_preview.dart) | `ActiveBorrowingPreview` — `home`'s own minimal view (title, author, daysLeft, computed progress). Not imported from anywhere, since the `borrowings` feature doesn't exist yet |
 | [`presentation/providers/home_providers.dart`](lib/features/home/presentation/providers/home_providers.dart) | `activeBorrowingsPreviewProvider` — sample data *routed through a provider*, not hardcoded in the widget, so swapping in the real `borrowings` feature later is a provider change, not a screen rewrite |
 | [`presentation/screens/home_screen.dart`](lib/features/home/presentation/screens/home_screen.dart) | `ConsumerWidget` — watches `activeBorrowingsPreviewProvider` and the real `bookListProvider` side by side |
+| [`core/providers/main_shell_providers.dart`](lib/core/providers/main_shell_providers.dart) | `mainShellTabIndexProvider` — lets Home's search bar switch `MainShell` to the Books tab from deep in the widget tree, no callback-threading needed |
+| [`core/widgets/book_cover.dart`](lib/core/widgets/book_cover.dart), [`books/presentation/widgets/book_card.dart`](lib/features/books/presentation/widgets/book_card.dart) | Shared cover/card widgets — `home` doesn't define its own book-card widgets anymore, it reuses `books`' (§3) |
 
 This is the same "small, feature-scoped model, not a shared entity" call as `auth`'s `AuthenticatedMember` (§2, decisions log) — applied here because the thing it would otherwise depend on (`borrowings`) doesn't exist yet, not because of any dislike of sharing in general.
 
-The dot-page-indicator under the borrowings carousel duplicates the small widget already written for onboarding (`onboarding_screen.dart`) — flagged, not yet extracted to `core/widgets/`, since two occurrences isn't quite enough to justify it yet; worth doing on a third use.
-
-### How the dots actually connect
+### How the dashboard's widgets connect
 
 `home_screen.dart` is one file, but it's built from several private widgets (all in that same file) composed together. This shows which data feeds which widget:
 
@@ -233,28 +235,121 @@ The dot-page-indicator under the borrowings carousel duplicates the small widget
 flowchart TD
     BookListProvider["bookListProvider<br/>(books feature — real)"]
     BorrowingsProvider["activeBorrowingsPreviewProvider<br/>(home's own — sample data)"]
+    TabIndexProvider["mainShellTabIndexProvider<br/>(core — which MainShell tab is selected)"]
 
-    HomeScreen["HomeScreen<br/>ConsumerWidget — watches both providers"]
+    HomeScreen["HomeScreen<br/>ConsumerWidget — watches all three providers"]
     BookListProvider -.watched by.-> HomeScreen
     BorrowingsProvider -.watched by.-> HomeScreen
 
     HomeScreen --> GreetingRow["_GreetingRow<br/>member.fullName → greeting + avatar initial"]
-    HomeScreen --> SearchBar["_SearchBar<br/>decorative, onTap is a TODO"]
-    HomeScreen --> MyBorrowings["_MyBorrowingsSection<br/>StatefulWidget — owns PageController + dot index"]
+    HomeScreen -->|"onTap: select(1)"| SearchBar["_SearchBar<br/>stateless — tap switches MainShell to Books"]
+    SearchBar -.writes.-> TabIndexProvider
+    HomeScreen --> MyBorrowings["_MyBorrowingsSection<br/>StatefulWidget — owns PageController + _currentIndex"]
     HomeScreen --> Recommended["_RecommendedSection<br/>booksAsync.when(loading/error/data)"]
 
     MyBorrowings -->|"one per item in\nactiveBorrowingsPreviewProvider"| BorrowingCard["_BorrowingCard"]
-    Recommended -->|"one per Book in\nbookListProvider"| RecommendedCard["_RecommendedBookCard"]
+    Recommended -->|"one per Book in\nbookListProvider"| BookCard["BookCard (shared, from books/)<br/>showAvailability: false"]
 
-    BorrowingCard --> BookCover["_BookCover<br/>shared by both card types —\nImage.asset if coverImageUrl set,\notherwise a purple placeholder icon"]
-    RecommendedCard --> BookCover
+    BorrowingCard --> BookCover["BookCover (shared, from core/)"]
+    BookCard --> BookCover
 ```
 
-Two things worth noticing from this diagram alone: (1) `_BookCover` is genuinely shared *within* `home_screen.dart` by both card types (not duplicated — this is the "small, stable, same-meaning" case from the Member/Book sharing discussion, just at the widget level instead of the entity level), and (2) `member` (the logged-in user) only flows into `_GreetingRow` — nothing else on this screen touches it.
+### How the "My Borrowings" carousel actually works
+
+This is pure local UI state — no provider, no async, no network delay — worth walking through separately since it's a different kind of "connecting the dots" than the data-fetch traces above.
+
+1. **`_MyBorrowingsSection` is a `StatefulWidget`**, not stateless, specifically because it needs to own two pieces of state that only this widget cares about: a `PageController` (drives the swipeable carousel) and `_currentIndex` (an `int`, which page is currently showing — used only to decide which dot is "lit up").
+2. **`HomeScreen.build()`** passes it `activeBorrowings` (the `List<ActiveBorrowingPreview>` already read from the provider) and `activeLimit` — `_MyBorrowingsSection` itself never touches Riverpod at all, it's just handed data.
+3. **The carousel itself**: `PageView.builder(controller: _controller, itemCount: borrowings.length, itemBuilder: (context, index) => _BorrowingCard(preview: borrowings[index]))` — one `_BorrowingCard` per item in the list. Swiping is handled entirely by `PageView` itself; nothing custom.
+4. **`onPageChanged: (index) => setState(() => _currentIndex = index)`** — this is the only place `_currentIndex` ever changes. Every swipe fires this callback, which calls `setState`, which rebuilds the widget — that rebuild is what redraws the dots.
+5. **The dots**: `List.generate(borrowings.length, (index) { final isActive = index == _currentIndex; ... })` — this just re-evaluates on every rebuild (step 4), coloring/sizing each dot based on whether its index matches `_currentIndex`. There's no separate "dot state" — the dots are a pure function of `_currentIndex`, recomputed fresh each time.
+6. **`_BorrowingCard`** itself is stateless — it renders one `ActiveBorrowingPreview`'s cover (via shared `BookCover`), title, author, a `LinearProgressIndicator` driven by `preview.progress` (computed on the model itself: `(totalBorrowDays - daysLeft) / totalBorrowDays`), and the "X days left" text.
+
+So the full local loop is: **swipe → `onPageChanged` fires → `setState` → whole `_MyBorrowingsSectionState.build()` reruns → `PageView` shows the new card (it already knew, that's what triggered this) and the dots re-render with the new `_currentIndex`.** No provider is involved anywhere in this loop — it's a self-contained widget with its own state, which is the correct call here since "which page am I on" is genuinely private to this one carousel and nothing else in the app needs to know or react to it.
+
+Two things worth noticing from this diagram alone: (1) `BookCover` is genuinely shared across *features* (`core/widgets/`), not just within one screen — the "small, stable, same-meaning" case from the Member/Book sharing discussion, just at the widget level instead of the entity level; and (2) `member` (the logged-in user) only flows into `_GreetingRow` — nothing else on this screen touches it.
 
 ---
 
-## 5. Screen navigation flow (built so far)
+## 5. Feature: `borrowings` (built — the first *stateful* mock)
+
+Every mock datasource before this one (`auth`, `books`) is read-only: it re-parses a bundled JSON file (or, now, caches it) and never remembers what happened last time. Borrowing is inherently a write — a member creates a record that has to persist and be reflected everywhere else (the book's `availableCopies`, the active-borrowings count, the dashboard) for the rest of the session. That's the actual new architecture problem this feature solves.
+
+| File | Layer | Job |
+|---|---|---|
+| [`domain/entities/borrowing.dart`](lib/features/borrowings/domain/entities/borrowing.dart) | domain | `Borrowing` — **schema-pure**: `id`, `bookId`, `memberId`, `borrowedAt`, `dueDate`, nullable `returnedAt`. No embedded book fields (see decisions log — that was a mistake, corrected). Computed `status` (`BorrowingRecordStatus`: `borrowed`/`returned`/`overdue`) and `daysLeft`. Also declares `BorrowingStatus` (`active`/`history`) — a *different* axis, matching the backend's `?status=` query values, not the record's own status |
+| [`domain/repositories/borrowing_repository.dart`](lib/features/borrowings/domain/repositories/borrowing_repository.dart) | domain | `BorrowingRepository` — interface: `getBorrowings({status})`, `borrowBook(bookId)` |
+| [`domain/usecases/get_borrowings.dart`](lib/features/borrowings/domain/usecases/get_borrowings.dart) | domain | `GetBorrowings` — calls `repository.getBorrowings(status: ...)` |
+| [`domain/usecases/borrow_book.dart`](lib/features/borrowings/domain/usecases/borrow_book.dart) | domain | `BorrowBook` — takes only a `bookId` `String` (matches `POST /api/borrowings`'s real request body — no member id, no dates, nothing client-decided) |
+| [`data/models/borrowing_model.dart`](lib/features/borrowings/data/models/borrowing_model.dart) | data | `BorrowingModel extends Borrowing`, with `fromJson`/`toJson` ready for the HTTP swap even though the mock never parses JSON for this one |
+| [`data/datasources/borrowing_exception.dart`](lib/features/borrowings/data/datasources/borrowing_exception.dart) | data | `BorrowingException` — thrown on a rejected borrow (limit reached, no copies left) |
+| [`data/datasources/borrowing_local_datasource.dart`](lib/features/borrowings/data/datasources/borrowing_local_datasource.dart) | data | `BorrowingLocalDatasourceImpl` — **the mutable mock**. Holds `final List<BorrowingModel> _borrowings = []` in memory for the app session (no JSON, no reset). `borrowBook` reads the current member's id (see below), checks the 3-active-borrowings limit and the book's availability, calls into `BookLocalDataSource` to decrement `availableCopies`, then appends the new record |
+| [`data/repositories/borrowing_repository_impl.dart`](lib/features/borrowings/data/repositories/borrowing_repository_impl.dart) | data | Catches `BorrowingException` → `ValidationFailure` (limit/availability rejections are user-facing, not server errors); anything else → `ServerFailure` |
+| [`presentation/models/active_borrowing_preview.dart`](lib/features/borrowings/presentation/models/active_borrowing_preview.dart) | presentation | `ActiveBorrowingPreview` — display model, now assembled from *two* real sources (a `Borrowing` plus its matching `Book`), not one |
+| [`presentation/providers/borrowings_providers.dart`](lib/features/borrowings/presentation/providers/borrowings_providers.dart) + generated `.g.dart` | presentation | Codegen, `keepAlive: true` on datasource/repository (same lifecycle split as `books`). `activeBorrowingsProvider` (`Future<List<Borrowing>>`) is the raw data; `activeBorrowingsPreviewProvider` does the real two-stage `Future.wait` fetch described below; `activeBorrowingsLimitProvider` returns `BorrowingLocalDatasourceImpl.maxActiveBorrowings` (single source of truth for the "3") |
+| [`auth/presentation/providers/current_member_provider.dart`](lib/features/auth/presentation/providers/current_member_provider.dart) | presentation (`auth`) | `CurrentMember` — `keepAlive` notifier holding the logged-in `AuthenticatedMember?` for the whole app session, `null` until `LoginController.submit` calls `.set(session.member)` on success. First thing in the app that lets *any* feature ask "who's currently logged in" without a widget having to thread it down via constructor — `borrowings` reads it to stamp `memberId` on a new borrowing, simulating what a real backend would read off the JWT |
+
+**Correction, 2026-09-10 — `Borrowing` originally had `bookTitle`/`author`/`coverImageUrl` denormalized onto it, and no `memberId`. Both were mistakes, caught by checking the entity against the actual given backend schema field-by-field** (see decisions log below for the full story). The entity is now schema-pure — only what the backend's `Borrowing` table actually has.
+
+**Why `BorrowingLocalDataSource` depends directly on `BookLocalDataSource`** (data-layer to data-layer, not through `BookRepository`): a borrow has to both read and mutate `availableCopies`, and `BookLocalDataSource` is the thing that actually owns that mutable state (see below). A real backend's borrowing service would do the equivalent — look up and update its own book records/database directly, not make an HTTP call back to its own books endpoint. This is a same-layer dependency (mock datasource → mock datasource), not a domain-layer violation.
+
+**`BookLocalDataSource` had to become stateful too** ([`books/data/datasources/book_local_datasource.dart`](lib/features/books/data/datasources/book_local_datasource.dart)): it used to re-read `assets/data/books.json` on every single call, so any in-memory edit would've been silently discarded by the next `getBooks()`. It now loads the JSON once into a `List<BookModel>? _cache` and serves every subsequent call from that cache, with `decrementAvailableCopies`/`incrementAvailableCopies` mutating an entry in place (`return` copies are `List.of(cache)` so callers can't mutate the source list directly). Because `bookLocalDataSourceProvider` is `keepAlive: true`, this one instance — and its cache — lives for the whole app session, which is exactly what makes a borrowed book's reduced availability show up correctly if you navigate back to its Book Details screen or the Books grid.
+
+**How `activeBorrowingsPreviewProvider` actually resolves book data — the real `Future.wait` use case in this app**: since `Borrowing` only carries a `bookId` now, there's no book title/author/cover to read off it directly. The provider does this in two stages: first `await`s `activeBorrowingsProvider.future` (must go first — there's no way to know which books to ask for otherwise), then calls `Future.wait(borrowings.map((b) => getBookById(b.bookId)))` to fetch **all** of those books concurrently rather than one at a time, since none of those fetches depend on each other once the `bookId`s are known. This is genuinely the same shape as the classic `Future.wait([fetchOrders(), fetchNotifications(), fetchSettings()])` example — just with a dynamic list instead of three fixed calls.
+
+**How a borrow actually stays consistent across the app**: after `BorrowBook` succeeds, `borrow_confirmation_sheet.dart` invalidates three providers — `activeBorrowingsProvider` (so the count and Home's carousel refetch), `bookByIdProvider(book.id)` (so Book Details shows the new `availableCopies`), and `bookListProvider` (so the Books grid and Home's Recommended row do too). Nothing polls; everything that showed stale data just gets told to refetch once, right after the mutation that invalidated it.
+
+Consumed by: `home_screen.dart`'s `_MyBorrowingsSection` (§4 — now watches `AsyncValue<List<ActiveBorrowingPreview>>` instead of a plain list, since it's a real fetch now) and `books`' `borrow_confirmation_sheet.dart`.
+
+### Runtime flow — tapping "Confirm Borrow"
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant Sheet as borrow_confirmation_sheet.dart
+    participant UC as domain/usecases/borrow_book.dart
+    participant R as borrowing_repository_impl.dart
+    participant BD as borrowing_local_datasource.dart
+    participant BookDS as book_local_datasource.dart<br/>(in-memory cache)
+
+    U->>Sheet: Tap "Confirm Borrow"
+    Sheet->>Sheet: setState(_isSubmitting = true)
+    Sheet->>UC: call(book.id)
+    UC->>R: borrowBook(bookId)
+    R->>BD: borrowBook(bookId)
+    BD-->>BD: count active borrowings
+    alt at 3-borrowing limit
+        BD-->>R: throws BorrowingException(...)
+        R-->>UC: Left(ValidationFailure)
+    else under limit
+        BD->>BookDS: getBookById(bookId)
+        alt availableCopies == 0
+            BD-->>R: throws BorrowingException(...)
+            R-->>UC: Left(ValidationFailure)
+        else copies available
+            BD->>BookDS: decrementAvailableCopies(bookId)
+            BD-->>BD: build BorrowingModel, add to in-memory list
+            BD-->>R: BorrowingModel
+            R-->>UC: Right(borrowing)
+        end
+    end
+    UC-->>Sheet: Either<Failure, Borrowing>
+    alt Left(failure)
+        Sheet->>Sheet: setState(_errorMessage = failure.message)
+    else Right(borrowing)
+        Sheet->>Sheet: ref.invalidate(activeBorrowingsProvider,<br/>bookByIdProvider(bookId), bookListProvider)
+        Sheet->>Sheet: setState(_didBorrow = true)
+        Note over Sheet: same sheet, same bottom-sheet<br/>chrome — swaps its body to the<br/>success view, no new route
+    end
+    U->>Sheet: Tap "View My Borrowings" / "Back to Home"
+    Sheet->>Sheet: mainShellTabIndexProvider.select(2 or 0),<br/>pop sheet, pop Book Details
+```
+
+`BorrowConfirmationSheet` went from a stateless-from-Flutter's-perspective `ConsumerWidget` to a `ConsumerStatefulWidget` for exactly this: it now owns three pieces of local state (`_isSubmitting`, `_didBorrow`, `_errorMessage`) that decide which body (`_buildConfirmation` vs `_buildSuccess`) to render, same bottom-sheet shell throughout — this is the "same sheet, becomes updated" behavior, not a second screen/route.
+
+---
+
+## 6. Screen navigation flow (built so far)
 
 ```mermaid
 flowchart TD
@@ -270,8 +365,8 @@ flowchart TD
     subgraph Shell_tabs["MainShell's tabs"]
         direction LR
         HomeTab["Home (real dashboard)"]
-        BooksTab["Books (placeholder)"]
-        BorrowingsTab["Borrowings (placeholder)"]
+        BooksTab["Books (real)"]
+        BorrowingsTab["Borrowings (real — Active/History)"]
         ProfileTab["Profile (placeholder)"]
     end
     Shell -.-> Shell_tabs
@@ -283,7 +378,7 @@ flowchart TD
 
 ---
 
-## 6. Decisions log
+## 7. Decisions log
 
 **2026-09-09 — Entities are per-feature, not shared.** `auth`'s `AuthenticatedMember` (id, fullName, email) is intentionally a different class from what the future `members` feature will use for the full profile — they represent different bounded contexts (authenticated identity vs. editable profile) even though the fields overlap. Same plan for `books`' full `Book` vs. `borrowings`' tiny embedded `BorrowingBook` — matches how the backend itself scopes each endpoint's response.
 
@@ -310,6 +405,20 @@ Worth knowing: this follows the *community* Clean Architecture pattern (same as 
 **2026-09-10 — Extracted `BookCover` (→ `core/widgets/`) and `BookCard` (→ `books/presentation/widgets/`), replacing three near-duplicate private widgets.** `home_screen.dart` had its own `_BookCover` + `_RecommendedBookCard`, `books_screen.dart` had its own `_BookGridCard` — same cover-or-placeholder logic, same title/author layout, differing only in whether an availability chip was shown. `BookCard` takes a `showAvailability` flag (`true` for the Books grid, `false` for Home's Recommended row) instead of duplicating the layout. `BookCover` went to `core/` rather than `books/` specifically because `home`'s borrowing-preview card needed it too — a genuine cross-feature reuse, not a premature one (same bar as the `Failure`/`UseCase` sharing in §1, applied to a widget instead of a domain type).
 
 **2026-09-10 — Added `AppEmptyState`/`AppErrorState` to `core/widgets/`, replacing plain `Text(...)` for every loading failure and empty-results case.** Matches design doc §41 (empty states) and §43 (error states — icon, heading, message, action button) instead of ad-hoc text. Wired into `books_screen.dart` (no-results search state, with a "Clear Search" action; failed-fetch state, with Retry via `ref.invalidate(bookListProvider)`) and `home_screen.dart`'s Recommended row (failed-fetch state — `_RecommendedSection` needed an `onRetry` callback threaded in from `HomeScreen`, since it's a plain `StatelessWidget` without its own `ref`).
+
+**2026-09-10 — `MainShell` moved its selected-tab index from local `State` into a provider (`core/providers/main_shell_providers.dart`, `mainShellTabIndexProvider`), so it's now a `ConsumerWidget` instead of `StatefulWidget`.** Needed for Home's search bar: tapping it should switch to the Books tab (where the real search field lives — Home was never meant to have a second, parallel search implementation), and a widget three levels deep in `HomeScreen` has no way to reach `MainShell`'s local state without either a callback threaded through every intermediate constructor or shared state reachable from anywhere. `ref.read(mainShellTabIndexProvider.notifier).select(1)` is the second one. This is the general pattern for anything else that ever needs to jump tabs (e.g. Book Details' eventual "View My Borrowings" action), not a one-off hack for this one button.
+
+**2026-09-10 — Book Details (`GET /api/books/{id}`) added; `BookCard` now navigates on tap, passing only `bookId`.** Full chain: `domain/usecases/get_book_by_id.dart` (`GetBookById`) → `book_providers.dart`'s `bookByIdProvider(id)`, a **family provider** (Riverpod's term for "one provider instance per argument" — `bookByIdProvider('book-001')` and `bookByIdProvider('book-002')` are cached and rebuilt independently). `BookCard` gained an optional `onTap`; both `books_screen.dart`'s grid and `home_screen.dart`'s Recommended row push `BookDetailsScreen(bookId: book.id)` — deliberately the id, not the `Book` object already sitting in memory from the list, so this screen works identically regardless of how it's reached (a list that already has the full object, or eventually a deep link/notification that only has an id). `Book` gained a nullable `pages` field (not in the backend contract, same treatment as `coverImageUrl` before it) to match the design's stat row. The "Borrow Book" button is real UI but a TODO stub — it correctly disables itself when `availableCopies == 0` (data we already have), but doesn't call anything yet since `borrowings` doesn't exist.
+
+**2026-09-10 — Book Details' bottom-pinned Borrow button moved to `Scaffold.bottomNavigationBar`, out of the scrollable `Column`.** It was previously just the last item in `SingleChildScrollView`'s content — sat wherever the description happened to end, not at the screen's bottom, and would've scrolled away entirely with a long description. `bottomNavigationBar` is a persistent footer outside the scroll area; it's conditionally built via `bookAsync.maybeWhen(data: ..., orElse: () => null)` since it depends on data that's only available once loaded. Same trick works for any future screen with a sticky bottom action.
+
+**2026-09-10 — `Borrowing` corrected to be schema-pure after checking it field-by-field against the actual given backend schema (a C# `Id/BookId/MemberId/BorrowedDate/DueDate/ReturnedDate/Status` shape), which caught two real mistakes.** The entity was first built with `bookTitle`/`author`/`coverImageUrl` denormalized directly onto it and *no* `memberId` — presented at the time as "mirrors what the real endpoint will contain," which was an unflagged guess, not a fact, and directly contradicted the given schema (which only has `BookId`, and does have `MemberId`). Fixed by: (1) stripping the three book fields off `Borrowing` entirely — book display data is now resolved separately, by fetching `Book` via `bookId` wherever it's needed; (2) adding `memberId`; (3) replacing the boolean `isActive` with a proper `BorrowingRecordStatus` enum (`borrowed`/`returned`/`overdue`) matching the schema's `Status` field, keeping `daysLeft` as a separate display-only computed getter. Also added `CurrentMember` (`auth/presentation/providers/current_member_provider.dart`) — a `keepAlive` session provider that didn't exist before this, since `BorrowingLocalDatasourceImpl.borrowBook` now needs to read *someone's* id to stamp on the new record, and nothing in the app could answer "who's logged in right now" outside of a widget's constructor parameter until now. Fixing point (1) is also what made `activeBorrowingsPreviewProvider` need a genuine `Future.wait` — see §5's dedicated explanation — since it can no longer read book info straight off a `Borrowing`, it has to fetch each referenced `Book` concurrently instead.
+
+**2026-09-14 — `AppTheme`'s button styles are full-width-only; putting one inline in a `Row` crashes layout.** `app_theme.dart`'s `elevatedButtonTheme` and `outlinedButtonTheme` both set `minimumSize: const Size.fromHeight(52)` — and `Size.fromHeight(x)` is `Size(double.infinity, x)`, i.e. *infinite width*. That's correct for every full-width CTA in the app (Login, Confirm Borrow, Confirm Return, Done…), all of which sit inside a `SizedBox(width: double.infinity)` that caps it. But My Borrowings' "Return" button sits bare inside a `Row`, where a non-flex child is free to size itself against `maxWidth: infinity` — so it demanded infinite width, the `Row` couldn't resolve, and the card, the list and the whole screen ended up with `size: MISSING`. The reported errors pointed at the `ListView` ("Null check operator used on a null value" in `RenderViewportBase.layoutChildSequence", then "Cannot hit test a render box with no size") because when a child fails to lay out, every parent above it fails too and the complaint surfaces at the top of the chain — which sent the first round of debugging at the list rather than the button three levels below. Fix: set `minimumSize` explicitly on any inline button (`my_borrowings_screen.dart`). **Rule for this codebase: any `ElevatedButton`/`OutlinedButton` that isn't full-width must override `minimumSize` locally.**
+
+**2026-09-10 — Built `MyBorrowingsScreen` (Active/History), and caught a real scoping bug while doing it.** `borrowing_local_datasource.dart`'s `getBorrowings` was filtering by returned/not-returned only — never by `memberId` — meaning it silently returned *every* borrowing ever created that session, regardless of who was currently logged in. Fixed by filtering to `b.memberId == _currentMemberId()` first, before the active/history split. New files: `presentation/models/borrowing_list_item.dart` (a richer display model than `ActiveBorrowingPreview` — needed both dates, a returned date, and the 3-state badge, kept as its own model rather than stretching the existing one) and its backing `borrowingListProvider` (family by `BorrowingStatus`), which duplicates `activeBorrowingsPreview`'s two-stage `Future.wait` fetch on purpose rather than sharing it — same "small per-screen model" call made everywhere else. `borrow_confirmation_sheet.dart` now also invalidates `borrowingListProvider(BorrowingStatus.active)` on a successful borrow, since `MainShell`'s `IndexedStack` keeps `MyBorrowingsScreen` mounted (and its providers watched) even while another tab is showing — without this it wouldn't refetch on its own. "Return" is a real, correctly-shown/hidden button (hidden once a record's `status` is `returned`) but a TODO stub — same pattern Borrow started as.
+
+**2026-09-10 — `ActiveBorrowingPreview` and its providers moved from `home` to a new (still mostly-empty) `borrowings` feature (§5), to build the Borrow Confirmation bottom sheet.** The sheet (opened from Book Details' Borrow button) needs to show "X of 3 active borrowings," the same count `home`'s dashboard already displays. Building it inside `books/` but reading `home`'s providers would mean `books` depends on `home` — backwards, and exactly the kind of cross-feature reach-in the project has avoided everywhere else. Since the data was never really `home`'s to begin with (it's borrowings-domain data that got parked there because `home` needed it first), moving it to its rightful feature — even though that feature is otherwise still just a stub — was the correct fix rather than working around the dependency direction. `books`' confirmation sheet now imports from `borrowings`, `home`'s dashboard also imports from `borrowings`; neither imports from the other.
 
 ---
 
