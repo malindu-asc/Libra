@@ -188,6 +188,47 @@ final class BorrowBookUseCaseProvider
 
 String _$borrowBookUseCaseHash() => r'5db730eef054612b3babe629cdd16b8faa49d6c7';
 
+@ProviderFor(returnBookUseCase)
+final returnBookUseCaseProvider = ReturnBookUseCaseProvider._();
+
+final class ReturnBookUseCaseProvider
+    extends $FunctionalProvider<ReturnBook, ReturnBook, ReturnBook>
+    with $Provider<ReturnBook> {
+  ReturnBookUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'returnBookUseCaseProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$returnBookUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<ReturnBook> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ReturnBook create(Ref ref) {
+    return returnBookUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ReturnBook value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ReturnBook>(value),
+    );
+  }
+}
+
+String _$returnBookUseCaseHash() => r'e4d9fccf097c6ec5726015b6dbabaad29432f0b9';
+
 @ProviderFor(activeBorrowings)
 final activeBorrowingsProvider = ActiveBorrowingsProvider._();
 
@@ -402,7 +443,7 @@ final class BorrowingListProvider
   }
 }
 
-String _$borrowingListHash() => r'eed73c58480f05f3aaffdc45c3b6c193a3164892';
+String _$borrowingListHash() => r'12c5f389150123120ed35e357b5c5ec3a1646a7c';
 
 /// Family provider — one cached instance per [BorrowingStatus], backing
 /// both tabs of My Borrowings independently. Same two-stage fetch as

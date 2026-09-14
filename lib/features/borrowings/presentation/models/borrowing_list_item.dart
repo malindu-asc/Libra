@@ -10,6 +10,7 @@ import '../../domain/entities/borrowing.dart';
 class BorrowingListItem {
   const BorrowingListItem({
     required this.borrowingId,
+    required this.bookId,
     required this.bookTitle,
     required this.author,
     required this.borrowedAt,
@@ -20,6 +21,7 @@ class BorrowingListItem {
   });
 
   final String borrowingId;
+  final String bookId;
   final String bookTitle;
   final String author;
   final DateTime borrowedAt;

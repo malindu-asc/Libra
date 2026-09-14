@@ -10,4 +10,5 @@ abstract class BorrowingRepository {
   });
 
   Future<Either<Failure, Borrowing>> borrowBook(String bookId);
+  Future<Either<Failure, Borrowing>> returnBorrowing(String borrowingId); //return
 }

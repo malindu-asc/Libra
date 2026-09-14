@@ -34,4 +34,19 @@ class BorrowingRepositoryImpl implements BorrowingRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+
+    @override //return
+  Future<Either<Failure, Borrowing>> returnBorrowing(
+    String borrowingId,
+  ) async {
+    try {
+      final model = await localDataSource.returnBorrowing(borrowingId);
+      return Right(model);
+    } on BorrowingException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

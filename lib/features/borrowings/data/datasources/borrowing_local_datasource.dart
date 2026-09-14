@@ -6,6 +6,7 @@ import 'borrowing_exception.dart';
 abstract class BorrowingLocalDataSource {
   Future<List<BorrowingModel>> getBorrowings({BorrowingStatus? status});
   Future<BorrowingModel> borrowBook(String bookId);
+  Future<BorrowingModel> returnBorrowing(String borrowingId); //return
 }
 
 class BorrowingLocalDatasourceImpl implements BorrowingLocalDataSource {
@@ -80,4 +81,36 @@ class BorrowingLocalDatasourceImpl implements BorrowingLocalDataSource {
     _borrowings.add(borrowing);
     return borrowing;
   }
+
+   @override //return
+   Future<BorrowingModel> returnBorrowing(String borrowingId) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    final memberId = _currentMemberId();
+    final index = _borrowings.indexWhere(
+      (b) => b.id == borrowingId && b.memberId == memberId,
+    );
+    if (index == -1) {
+      throw const BorrowingException('Borrowing not found.');
+    }
+
+    final borrowing = _borrowings[index];
+    if (borrowing.returnedAt != null) {
+      throw const BorrowingException('This book has already been returned.');
+    }
+
+    await _bookLocalDataSource.incrementAvailableCopies(borrowing.bookId);
+
+    final updated = BorrowingModel(
+      id: borrowing.id,
+      bookId: borrowing.bookId,
+      memberId: borrowing.memberId,
+      borrowedAt: borrowing.borrowedAt,
+      dueDate: borrowing.dueDate,
+      returnedAt: DateTime.now(),
+    );
+    _borrowings[index] = updated;
+    return updated;
+  }
+
 }

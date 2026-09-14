@@ -8,12 +8,13 @@ import '../../domain/entities/borrowing.dart';
 import '../../domain/repositories/borrowing_repository.dart';
 import '../../domain/usecases/borrow_book.dart';
 import '../../domain/usecases/get_borrowings.dart';
+import '../../domain/usecases/return_book.dart';
 import '../models/active_borrowing_preview.dart';
 import '../models/borrowing_list_item.dart';
 
 part 'borrowings_providers.g.dart';
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true) //if not widget listen it stays
 BorrowingLocalDataSource borrowingLocalDataSource(Ref ref) =>
     BorrowingLocalDatasourceImpl(
       ref.watch(bookLocalDataSourceProvider),
@@ -31,6 +32,10 @@ GetBorrowings getBorrowingsUseCase(Ref ref) =>
 @riverpod
 BorrowBook borrowBookUseCase(Ref ref) =>
     BorrowBook(ref.watch(borrowingRepositoryProvider));
+
+@riverpod
+ReturnBook returnBookUseCase(Ref ref) =>
+    ReturnBook(ref.watch(borrowingRepositoryProvider));
 
 @riverpod
 Future<List<Borrowing>> activeBorrowings(Ref ref) async {
@@ -96,6 +101,7 @@ Future<List<BorrowingListItem>> borrowingList(
         (failure) => throw failure,
         (book) => BorrowingListItem(
           borrowingId: borrowings[i].id,
+          bookId: borrowings[i].bookId,
           bookTitle: book.title,
           author: book.author,
           borrowedAt: borrowings[i].borrowedAt,

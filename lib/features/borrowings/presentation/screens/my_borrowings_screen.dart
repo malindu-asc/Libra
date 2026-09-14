@@ -12,6 +12,7 @@ import '../../../../core/widgets/book_cover.dart';
 import '../../domain/entities/borrowing.dart';
 import '../models/borrowing_list_item.dart';
 import '../providers/borrowings_providers.dart';
+import '../widgets/return_confirmation_sheet.dart';
 
 class MyBorrowingsScreen extends StatefulWidget {
   const MyBorrowingsScreen({super.key});
@@ -159,15 +160,17 @@ class _BorrowingsList extends ConsumerWidget {
               itemCount: items.length,
               separatorBuilder: (_, index) =>
                   const SizedBox(height: AppSpacing.md),
-              itemBuilder: (context, index) =>
-                  _BorrowingCard(item: items[index]),
+              itemBuilder: (context, index) => _BorrowingCard(
+                key: ValueKey(items[index].borrowingId),
+                item: items[index],
+              ),
             ),
     );
   }
 }
 
 class _BorrowingCard extends StatelessWidget {
-  const _BorrowingCard({required this.item});
+  const _BorrowingCard({required this.item, super.key});
 
   final BorrowingListItem item;
 
@@ -191,6 +194,7 @@ class _BorrowingCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -220,9 +224,7 @@ class _BorrowingCard extends StatelessWidget {
               ),
               if (item.status != BorrowingRecordStatus.returned)
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: wire to a real ReturnBook usecase.
-                  },
+                  onPressed: () => showReturnConfirmationSheet(context, item),
                   style: ElevatedButton.styleFrom(
                     shape: const StadiumBorder(),
                   ),
