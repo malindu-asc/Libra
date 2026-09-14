@@ -15,6 +15,7 @@ import '../../../borrowings/domain/entities/borrowing.dart';
 import '../../../borrowings/presentation/providers/borrowings_providers.dart';
 import '../../domain/entities/member.dart';
 import '../providers/member_providers.dart';
+import 'edit_profile_screen.dart';
 
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -67,9 +68,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> { //login state m
               _SettingsTile(
                 icon: Icons.person_outline,
                 label: 'Edit Profile',
-                onTap: () {
-                  // TODO: push EditProfileScreen once it exists.
-                },
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => EditProfileScreen(member: member),
+                  ),
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               _SettingsTile(
