@@ -139,19 +139,19 @@ final class GetBooksUseCaseProvider
 
 String _$getBooksUseCaseHash() => r'2b182248760ea1f90cf6f0846575645b1a9d082b';
 
-/// The book catalog. `AsyncNotifier` (not a plain `FutureProvider`) so the
+/// The book catalog. `AsyncNotifier(asyncloading,asyncdata,asyncerror)` (not a plain `FutureProvider`) so the
 /// same invalidate-and-refetch pattern used elsewhere (pull-to-refresh, a
 /// future search box) has somewhere to hook in later without a rewrite.
 
 @ProviderFor(BookList)
 final bookListProvider = BookListProvider._();
 
-/// The book catalog. `AsyncNotifier` (not a plain `FutureProvider`) so the
+/// The book catalog. `AsyncNotifier(asyncloading,asyncdata,asyncerror)` (not a plain `FutureProvider`) so the
 /// same invalidate-and-refetch pattern used elsewhere (pull-to-refresh, a
 /// future search box) has somewhere to hook in later without a rewrite.
 final class BookListProvider
     extends $AsyncNotifierProvider<BookList, List<Book>> {
-  /// The book catalog. `AsyncNotifier` (not a plain `FutureProvider`) so the
+  /// The book catalog. `AsyncNotifier(asyncloading,asyncdata,asyncerror)` (not a plain `FutureProvider`) so the
   /// same invalidate-and-refetch pattern used elsewhere (pull-to-refresh, a
   /// future search box) has somewhere to hook in later without a rewrite.
   BookListProvider._()
@@ -175,7 +175,7 @@ final class BookListProvider
 
 String _$bookListHash() => r'3c69fe4fb7f76edb74c337dac6f877ac1ce817b2';
 
-/// The book catalog. `AsyncNotifier` (not a plain `FutureProvider`) so the
+/// The book catalog. `AsyncNotifier(asyncloading,asyncdata,asyncerror)` (not a plain `FutureProvider`) so the
 /// same invalidate-and-refetch pattern used elsewhere (pull-to-refresh, a
 /// future search box) has somewhere to hook in later without a rewrite.
 

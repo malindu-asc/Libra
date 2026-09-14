@@ -6,6 +6,7 @@ import '../../features/books/presentation/screens/books_screen.dart';
 import '../../features/borrowings/presentation/screens/my_borrowings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../providers/main_shell_providers.dart';
+import '../../features/members/presentation/screens/profile_screen.dart';
 
 /// The bottom-nav shell every tab lives inside. Selected tab lives in
 /// mainShellTabIndexProvider (not local State) so anything in the tree —
@@ -24,7 +25,7 @@ class MainShell extends ConsumerWidget {
       HomeScreen(member: member),
       const BooksScreen(),
       const MyBorrowingsScreen(),
-      const _PlaceholderTab(label: 'Profile'),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -63,14 +64,3 @@ class MainShell extends ConsumerWidget {
   }
 }
 
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(label)),
-    body: Center(child: Text('$label - coming soon')),
-  );
-}
