@@ -15,6 +15,7 @@ import '../../../borrowings/domain/entities/borrowing.dart';
 import '../../../borrowings/presentation/providers/borrowings_providers.dart';
 import '../../domain/entities/member.dart';
 import '../providers/member_providers.dart';
+import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 
 
@@ -78,9 +79,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> { //login state m
               _SettingsTile(
                 icon: Icons.lock_outline,
                 label: 'Change Password',
-                onTap: () {
-                  // TODO: push ChangePasswordScreen once it exists.
-                },
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChangePasswordScreen(),
+                  ),
+                ),
               ),
               const SizedBox(height: AppSpacing.section),
               Padding(
