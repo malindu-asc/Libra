@@ -20,6 +20,8 @@ abstract class AuthLocalDataSource {
   });
 
   Future<void> forgotPassword({required String email});
+
+  Future<void> logout();
 }
 
 class AuthLocalDatasourceImpl implements AuthLocalDataSource {
@@ -110,5 +112,12 @@ class AuthLocalDatasourceImpl implements AuthLocalDataSource {
     }
     // Backend always returns a generic success from here regardless of
     // whether the email exists — nothing else to validate.
+  }
+
+  @override
+  Future<void> logout() async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    // Nothing to revoke in the mock — the real datasource will POST the
+    // refresh token here so the server can invalidate it.
   }
 }

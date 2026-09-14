@@ -21,4 +21,8 @@ abstract class AuthRepository {
   /// Always resolves the same way regardless of whether the email exists
   /// (anti-enumeration) - the repository has nothing further to expose.
   Future<Either<Failure, void>> forgotPassword({required String email});
+
+  /// Mirrors `POST /api/auth/logout` — revokes the refresh token server-side.
+  /// Clearing local session state is the caller's job, not the repository's.
+  Future<Either<Failure, void>> logout();
 }

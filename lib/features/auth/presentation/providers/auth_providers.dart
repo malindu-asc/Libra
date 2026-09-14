@@ -7,6 +7,7 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/forgot_password.dart';
 import '../../domain/usecases/login.dart';
 import '../../domain/usecases/register.dart';
+import '../../domain/usecases/logout.dart';
 import 'current_member_provider.dart';
 
 part 'auth_providers.g.dart';
@@ -28,6 +29,10 @@ Register registerUseCase(Ref ref) =>
 @riverpod
 ForgotPassword forgotPasswordUseCase(Ref ref) =>
     ForgotPassword(ref.watch(authRepositoryProvider));
+
+@riverpod
+Logout logoutUseCase(Ref ref) =>
+    Logout(ref.watch(authRepositoryProvider));
 
 @riverpod
 class LoginController extends _$LoginController {
