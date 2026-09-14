@@ -156,13 +156,19 @@ class _BorrowingsList extends ConsumerWidget {
                   ? "You haven't borrowed any books yet."
                   : 'Books you return will show up here.',
             )
-          : ListView.separated(
-              itemCount: items.length,
-              separatorBuilder: (_, index) =>
-                  const SizedBox(height: AppSpacing.md),
-              itemBuilder: (context, index) => _BorrowingCard(
-                key: ValueKey(items[index].borrowingId),
-                item: items[index],
+          
+                    : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < items.length; i++) ...[
+                    if (i > 0) const SizedBox(height: AppSpacing.md),
+                    _BorrowingCard(
+                      key: ValueKey(items[i].borrowingId),
+                      item: items[i],
+                    ),
+                  ],
+                ],
               ),
             ),
     );
@@ -193,82 +199,108 @@ class _BorrowingCard extends StatelessWidget {
         borderRadius: AppRadius.cardRadius,
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              BookCover(width: 60, height: 84, imageUrl: item.coverImageUrl),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
+          BookCover(width: 76, height: 112, imageUrl: item.coverImageUrl),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.bookTitle,
-                      style: AppTextStyles.cardTitle.copyWith(
-                        color: AppColors.textHeading,
+                    Expanded(
+                      child: Text(
+                        item.bookTitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.cardTitle.copyWith(
+                          color: AppColors.textHeading,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.author,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.textSecondary,
+                    if (item.status != BorrowingRecordStatus.returned) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      ElevatedButton(
+                        onPressed: () =>
+                            showReturnConfirmationSheet(context, item),
+                        // minimumSize must be set locally: AppTheme's button
+                        // style uses Size.fromHeight (infinite width) for
+                        // full-width CTAs, which can't lay out inline in a Row.
+                        style: ElevatedButton.styleFrom(
+                          shape: const StadiumBorder(),
+                          minimumSize: const Size(76, 36),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                          ),
+                          textStyle: AppTextStyles.caption,
+                        ),
+                        child: const Text('Return'),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.author,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 16,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Borrowed: ${dateFormat.format(item.borrowedAt)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              if (item.status != BorrowingRecordStatus.returned)
-                ElevatedButton(
-                  onPressed: () => showReturnConfirmationSheet(context, item),
-                  style: ElevatedButton.styleFrom(
-                    shape: const StadiumBorder(),
-                  ),
-                  child: const Text('Return'),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      item.status == BorrowingRecordStatus.overdue
+                          ? Icons.warning_amber_rounded
+                          : Icons.access_time,
+                      size: 16,
+                      color: badgeColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        item.returnedAt != null
+                            ? 'Returned: ${dateFormat.format(item.returnedAt!)}'
+                            : 'Due: ${dateFormat.format(item.dueDate)} '
+                                  '($badgeLabel)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.caption.copyWith(
+                          color: badgeColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Divider(height: 1),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              const Icon(
-                Icons.calendar_today_outlined,
-                size: 16,
-                color: AppColors.textTertiary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Borrowed: ${dateFormat.format(item.borrowedAt)}',
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                item.status == BorrowingRecordStatus.overdue
-                    ? Icons.warning_amber_rounded
-                    : Icons.access_time,
-                size: 16,
-                color: badgeColor,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                item.returnedAt != null
-                    ? 'Returned: ${dateFormat.format(item.returnedAt!)}'
-                    : 'Due: ${dateFormat.format(item.dueDate)} ($badgeLabel)',
-                style: AppTextStyles.caption.copyWith(color: badgeColor),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
