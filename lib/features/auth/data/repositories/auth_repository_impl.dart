@@ -5,11 +5,13 @@ import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_exception.dart';
 import '../datasources/auth_local_datasource.dart';
+import '../datasources/auth_session_storage.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  const AuthRepositoryImpl(this.localDataSource);
+  const AuthRepositoryImpl(this.localDataSource, this.sessionStorage);
 
   final AuthLocalDataSource localDataSource;
+  final AuthSessionStorage sessionStorage;
 
   @override
   Future<Either<Failure, AuthSession>> login({
@@ -21,6 +23,7 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
       );
+      await sessionStorage.save(session);
       return Right(session);
     } on AuthException catch (e) {
       return Left(ValidationFailure(e.message));
@@ -67,11 +70,21 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, void>> logout() async {
     try {
       await localDataSource.logout();
+      await sessionStorage.clear();
       return const Right(null);
     } on AuthException catch (e) {
       return Left(ValidationFailure(e.message));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AuthSession?>> restoreSession() async {
+    try {
+      return Right(await sessionStorage.read());
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
     }
   }
 }

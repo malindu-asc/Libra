@@ -22,7 +22,10 @@ abstract class AuthRepository {
   /// (anti-enumeration) - the repository has nothing further to expose.
   Future<Either<Failure, void>> forgotPassword({required String email});
 
-  /// Mirrors `POST /api/auth/logout` — revokes the refresh token server-side.
-  /// Clearing local session state is the caller's job, not the repository's.
+  /// Mirrors `POST /api/auth/logout`, and also drops the persisted session.
   Future<Either<Failure, void>> logout();
+
+  /// Reads the session persisted on-device, or `null` if there isn't one.
+  /// Purely local — no endpoint behind it.
+  Future<Either<Failure, AuthSession?>> restoreSession();
 }

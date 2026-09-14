@@ -68,9 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         data: (session) {
           if (session == null) return;
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (_) => MainShell(member: session.member),
-            ),
+            MaterialPageRoute(builder: (_) => const MainShell()),
             (route) => false,
           );
         },
