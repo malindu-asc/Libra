@@ -10,6 +10,11 @@ import '../models/book_model.dart';
 /// being overwritten by the next re-read of the JSON file.
 abstract class BookLocalDataSource {
   Future<List<BookModel>> getBooks();
+
+  /// Stands in for `GET /api/books?search=`. An empty query returns
+  /// everything, same as omitting the parameter.
+  Future<List<BookModel>> searchBooks(String query);
+
   Future<BookModel> getBookById(String id);
   Future<void> decrementAvailableCopies(String id);
   Future<void> incrementAvailableCopies(String id);
@@ -36,6 +41,21 @@ class BookLocalDatasourceImpl implements BookLocalDataSource {
 
   @override
   Future<List<BookModel>> getBooks() async => List.of(await _load());
+
+  @override
+  Future<List<BookModel>> searchBooks(String query) async {
+    final books = await _load();
+    final normalized = query.trim().toLowerCase();
+    if (normalized.isEmpty) return List.of(books);
+
+    return books
+        .where(
+          (book) =>
+              book.title.toLowerCase().contains(normalized) ||
+              book.author.toLowerCase().contains(normalized),
+        )
+        .toList();
+  }
 
   @override
   Future<BookModel> getBookById(String id) async {

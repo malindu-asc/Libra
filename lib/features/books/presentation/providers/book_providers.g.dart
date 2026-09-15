@@ -197,6 +197,136 @@ abstract class _$BookList extends $AsyncNotifier<List<Book>> {
   }
 }
 
+@ProviderFor(searchBooksUseCase)
+final searchBooksUseCaseProvider = SearchBooksUseCaseProvider._();
+
+final class SearchBooksUseCaseProvider
+    extends $FunctionalProvider<SearchBooks, SearchBooks, SearchBooks>
+    with $Provider<SearchBooks> {
+  SearchBooksUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'searchBooksUseCaseProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchBooksUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<SearchBooks> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SearchBooks create(Ref ref) {
+    return searchBooksUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SearchBooks value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SearchBooks>(value),
+    );
+  }
+}
+
+String _$searchBooksUseCaseHash() =>
+    r'7d56c07e8d0a9cd60f9d9bd36ac0ce5de8f2f3d9';
+
+/// One cached instance per query string. The Books screen debounces before
+/// changing the query, so this isn't rebuilt on every keystroke.
+
+@ProviderFor(bookSearch)
+final bookSearchProvider = BookSearchFamily._();
+
+/// One cached instance per query string. The Books screen debounces before
+/// changing the query, so this isn't rebuilt on every keystroke.
+
+final class BookSearchProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Book>>,
+          List<Book>,
+          FutureOr<List<Book>>
+        >
+    with $FutureModifier<List<Book>>, $FutureProvider<List<Book>> {
+  /// One cached instance per query string. The Books screen debounces before
+  /// changing the query, so this isn't rebuilt on every keystroke.
+  BookSearchProvider._({
+    required BookSearchFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'bookSearchProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$bookSearchHash();
+
+  @override
+  String toString() {
+    return r'bookSearchProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Book>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Book>> create(Ref ref) {
+    final argument = this.argument as String;
+    return bookSearch(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is BookSearchProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$bookSearchHash() => r'93ca8ce99604dc390e0189e6bbe9c4c19b219ec4';
+
+/// One cached instance per query string. The Books screen debounces before
+/// changing the query, so this isn't rebuilt on every keystroke.
+
+final class BookSearchFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Book>>, String> {
+  BookSearchFamily._()
+    : super(
+        retry: null,
+        name: r'bookSearchProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// One cached instance per query string. The Books screen debounces before
+  /// changing the query, so this isn't rebuilt on every keystroke.
+
+  BookSearchProvider call(String query) =>
+      BookSearchProvider._(argument: query, from: this);
+
+  @override
+  String toString() => r'bookSearchProvider';
+}
+
 @ProviderFor(getBookByIdUseCase)
 final getBookByIdUseCaseProvider = GetBookByIdUseCaseProvider._();
 
