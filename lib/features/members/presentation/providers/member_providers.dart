@@ -63,6 +63,9 @@ class UpdateProfileController extends _$UpdateProfileController {
       ),
     );
 
+    // autoDispose controller: the screen may be gone already (user backed
+    // out mid-save), and assigning state on a disposed notifier throws.
+    if (!ref.mounted) return;
     state = result.match(
       (failure) => AsyncError(failure.message, StackTrace.current), //return
       (member) {
@@ -101,6 +104,7 @@ class ChangePasswordController extends _$ChangePasswordController {
         newPassword: newPassword,
       ),
     );
+    if (!ref.mounted) return;
     state = result.match(
       (failure) => AsyncError(failure.message, StackTrace.current),//return
       (_) => const AsyncData(true),

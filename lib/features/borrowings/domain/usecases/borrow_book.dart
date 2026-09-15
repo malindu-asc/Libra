@@ -1,5 +1,4 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/usecase/usecase.dart';
@@ -17,8 +16,4 @@ class BorrowBook implements UseCase<Borrowing, String> {
   @override
   Future<Either<Failure, Borrowing>> call(String bookId) =>
       repository.borrowBook(bookId);
-
-  @riverpod
-   ReturnBook returnBookUseCase(Ref ref) =>
-   ReturnBook(ref.watch(borrowingRepositoryProvider));
 }
