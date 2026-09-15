@@ -8,7 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/providers/main_shell_providers.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../../core/widgets/book_cover.dart';
-import '../../../auth/domain/entities/authenticated_member.dart';
+import '../../../auth/presentation/providers/current_member_provider.dart';
 import '../../../books/domain/entities/book.dart';
 import '../../../books/presentation/providers/book_providers.dart';
 import '../../../books/presentation/screens/book_details_screen.dart';
@@ -17,17 +17,13 @@ import '../../../borrowings/presentation/models/active_borrowing_preview.dart';
 import '../../../borrowings/presentation/providers/borrowings_providers.dart';
 
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({required this.member, super.key});
-
-  final AuthenticatedMember member;
-
-  String get _firstName {
-    final trimmed = member.fullName.trim();
-    return trimmed.isEmpty ? 'there' : trimmed.split(' ').first;
-  }
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final fullName = ref.watch(currentMemberProvider)?.fullName.trim() ?? '';
+    final firstName = fullName.isEmpty ? 'there' : fullName.split(' ').first;
+
     final activeBorrowingsAsync = ref.watch(activeBorrowingsPreviewProvider);
     final activeLimit = ref.watch(activeBorrowingsLimitProvider);
     final booksAsync = ref.watch(bookListProvider);
@@ -41,7 +37,7 @@ class HomeScreen extends ConsumerWidget {
             vertical: AppSpacing.md,
           ),
           children: [
-            _GreetingRow(firstName: _firstName),
+            _GreetingRow(firstName: firstName),
             const SizedBox(height: AppSpacing.section),
             _SearchBar(
               onTap: () =>

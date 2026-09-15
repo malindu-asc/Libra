@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/auth/domain/entities/authenticated_member.dart';
 import '../../features/books/presentation/screens/books_screen.dart';
 import '../../features/borrowings/presentation/screens/my_borrowings_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
@@ -13,19 +12,17 @@ import '../../features/members/presentation/screens/profile_screen.dart';
 /// like Home's search bar — can switch tabs without a callback threaded
 /// all the way down.
 class MainShell extends ConsumerWidget {
-  const MainShell({required this.member, super.key});
-
-  final AuthenticatedMember member;
+  const MainShell({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(mainShellTabIndexProvider);
 
-    final tabs = [
-      HomeScreen(member: member),
-      const BooksScreen(),
-      const MyBorrowingsScreen(),
-      const ProfileScreen(),
+    const tabs = [
+      HomeScreen(),
+      BooksScreen(),
+      MyBorrowingsScreen(),
+      ProfileScreen(),
     ];
 
     return Scaffold(
