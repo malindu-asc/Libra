@@ -3,14 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/usecase/usecase.dart';
-import '../../../../core/widgets/main_shell.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/providers/current_member_provider.dart';
-import '../../../onboarding/presentation/screens/onboarding_screen.dart';
 import '../widgets/loading_dots.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -38,17 +37,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     final session = result.match((failure) => null, (session) => session);
 
+    // `go` replaces the stack rather than pushing onto it — same intent the
     if (session == null) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-      );
+      context.go('/onboarding');
       return;
     }
 
     ref.read(currentMemberProvider.notifier).set(session.member);
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const MainShell()));
+    context.go('/home');
   }
 
   @override
