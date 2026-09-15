@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/main_shell.dart';
 import '../providers/auth_providers.dart';
-import 'forgot_password_screen.dart';
-import 'register_screen.dart';
 
 //referpod basically has listen,watch and read
 // ref.read = trigger actions tell controller to execute function(no listeinig, or update changes)
@@ -45,17 +43,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  void _goToForgotPassword() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-    );
-  }
+  // `push` here, not `go` — Register and Forgot Password are siblings of
+  // Login that should return to it on back.
+  void _goToForgotPassword() => context.push('/forgot-password');
 
-  void _goToSignUp() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
-  }
+  void _goToSignUp() => context.push('/register');
 
   @override
   Widget build(BuildContext context) {
@@ -67,10 +59,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ..showSnackBar(SnackBar(content: Text(error.toString()))),
         data: (session) {
           if (session == null) return;
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const MainShell()),
-            (route) => false,
-          );
+          // `go` wipes the auth stack — you shouldn't be able to go "back"
+          // into Login once signed in. Replaces pushAndRemoveUntil.
+          context.go('/home');
         },
       );
     });
