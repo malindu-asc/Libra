@@ -1,12 +1,15 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/datasources/auth_local_datasource.dart';
+import '../../data/datasources/auth_session_storage.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/forgot_password.dart';
 import '../../domain/usecases/login.dart';
 import '../../domain/usecases/register.dart';
+import '../../domain/usecases/restore_session.dart';
 import '../../domain/usecases/logout.dart';
 import 'current_member_provider.dart';
 
@@ -16,8 +19,14 @@ part 'auth_providers.g.dart';
 AuthLocalDataSource authLocalDataSource(Ref ref) => AuthLocalDatasourceImpl();
 
 @Riverpod(keepAlive: true)
-AuthRepository authRepository(Ref ref) =>
-    AuthRepositoryImpl(ref.watch(authLocalDataSourceProvider));
+AuthSessionStorage authSessionStorage(Ref ref) => //inject
+    const AuthSessionStorage(FlutterSecureStorage());
+
+@Riverpod(keepAlive: true)
+AuthRepository authRepository(Ref ref) => AuthRepositoryImpl(
+  ref.watch(authLocalDataSourceProvider),
+  ref.watch(authSessionStorageProvider),
+);
 
 @riverpod
 Login loginUseCase(Ref ref) => Login(ref.watch(authRepositoryProvider));
@@ -35,6 +44,10 @@ Logout logoutUseCase(Ref ref) =>
     Logout(ref.watch(authRepositoryProvider));
 
 @riverpod
+RestoreSession restoreSessionUseCase(Ref ref) =>
+    RestoreSession(ref.watch(authRepositoryProvider));
+
+@riverpod //login call
 class LoginController extends _$LoginController {
   @override
   FutureOr<AuthSession?> build() => null;
@@ -48,6 +61,9 @@ class LoginController extends _$LoginController {
     final result = await useCase(
       LoginParams(email: email, password: password),
     );
+    // These controllers are autoDispose, so the screen may already be gone
+    // by the time the call returns — assigning state then throws.
+    if (!ref.mounted) return;
     state = result.match(
       (failure) => AsyncError(failure.message, StackTrace.current),
       (session) {
@@ -58,7 +74,7 @@ class LoginController extends _$LoginController {
   }
 }
 
-@riverpod
+@riverpod //register call
 class RegisterController extends _$RegisterController {
   @override
   FutureOr<bool> build() => false;
@@ -79,6 +95,7 @@ class RegisterController extends _$RegisterController {
         password: password,
       ),
     );
+    if (!ref.mounted) return;
     state = result.match(
       (failure) => AsyncError(failure.message, StackTrace.current),
       (_) => const AsyncData(true),
@@ -95,6 +112,7 @@ class ForgotPasswordController extends _$ForgotPasswordController {
     state = const AsyncLoading();
     final useCase = ref.read(forgotPasswordUseCaseProvider);
     final result = await useCase(ForgotPasswordParams(email: email));
+    if (!ref.mounted) return;
     state = result.match(
       (failure) => AsyncError(failure.message, StackTrace.current),
       (_) => const AsyncData(true),

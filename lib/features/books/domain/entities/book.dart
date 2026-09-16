@@ -20,7 +20,7 @@ class Book {
   final int totalCopies;
   final int availableCopies;
 
-  /// From the book-details endpoint only — null in list/search results.
+  /// From the book-details endpoint only 
   final String? description;
 
   /// Not in the current backend contract; nullable so the UI can fall back

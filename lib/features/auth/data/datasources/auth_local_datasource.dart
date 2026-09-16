@@ -34,7 +34,7 @@ class AuthLocalDatasourceImpl implements AuthLocalDataSource {
     return (json.decode(raw) as List<dynamic>).cast<Map<String, dynamic>>();
   }
 
-  @override
+  @override //execute
   Future<AuthSessionModel> login({
     required String email,
     required String password,

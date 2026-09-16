@@ -162,54 +162,144 @@ Register and Forgot Password follow the identical shape (`RegisterController`, `
 
 ## 3. Feature: `books` (built)
 
+Three use cases (`GetBooks`, `SearchBooks`, `GetBookById`), each with its own provider, plus two mutation methods on the datasource that exist purely so `borrowings` can change availability.
+
+### Files
+
 | File | Layer | Job |
 |---|---|---|
-| [`domain/entities/book.dart`](lib/features/books/domain/entities/book.dart) | domain | `Book` — full catalog shape (id, title, author, isbn, publishedYear, totalCopies, availableCopies, nullable description/coverImageUrl) |
-| [`domain/repositories/book_repository.dart`](lib/features/books/domain/repositories/book_repository.dart) | domain | `BookRepository` — interface, `getBooks()` |
-| [`domain/usecases/get_books.dart`](lib/features/books/domain/usecases/get_books.dart) | domain | `GetBooks` — calls `repository.getBooks()`, nothing else |
+| [`domain/entities/book.dart`](lib/features/books/domain/entities/book.dart) | domain | `Book` — the seven schema fields, plus `description`/`coverImageUrl`/`pages`, which are nullable and commented as **not in the backend contract** (UI-only extras) |
+| [`domain/repositories/book_repository.dart`](lib/features/books/domain/repositories/book_repository.dart) | domain | `BookRepository` — `getBooks()`, `searchBooks(query)`, `getBookById(id)` |
+| [`domain/usecases/get_books.dart`](lib/features/books/domain/usecases/get_books.dart) | domain | `GetBooks` — `GET /api/books` |
+| [`domain/usecases/search_books.dart`](lib/features/books/domain/usecases/search_books.dart) | domain | `SearchBooks` — `GET /api/books?search=` |
+| [`domain/usecases/get_book_by_id.dart`](lib/features/books/domain/usecases/get_book_by_id.dart) | domain | `GetBookById` — `GET /api/books/{id}` |
 | [`data/models/book_model.dart`](lib/features/books/data/models/book_model.dart) | data | `BookModel extends Book`, adds `fromJson` |
-| [`data/datasources/book_local_datasource.dart`](lib/features/books/data/datasources/book_local_datasource.dart) | data | Mock — reads `assets/data/books.json`. Swap point for real `GET /api/books` later |
-| [`assets/data/books.json`](assets/data/books.json) | data (asset) | 6 sample books — same pattern as `CleanArchitectureDemo`'s `assets/data/books.json`, and as `auth`'s `users.json` |
-| [`data/repositories/book_repository_impl.dart`](lib/features/books/data/repositories/book_repository_impl.dart) | data | Catches datasource exceptions, converts to `Failure` |
-| [`presentation/providers/book_providers.dart`](lib/features/books/presentation/providers/book_providers.dart) + generated `.g.dart` | presentation | Codegen (`@riverpod`) — wires datasource → repository → usecase, exposes `bookListProvider` (`AsyncNotifier<List<Book>>`) |
-| [`presentation/widgets/book_card.dart`](lib/features/books/presentation/widgets/book_card.dart) | presentation | `BookCard` — shared between the Books grid and Home's Recommended row (`showAvailability` toggles the chip), now also tappable (`onTap`) |
-| [`domain/usecases/get_book_by_id.dart`](lib/features/books/domain/usecases/get_book_by_id.dart) | domain | `GetBookById` — calls `repository.getBookById(id)`, matches `GetBooks`'s shape |
-| [`presentation/screens/book_details_screen.dart`](lib/features/books/presentation/screens/book_details_screen.dart) | presentation | `ConsumerWidget` — takes only a `bookId` (never the whole `Book`), watches `bookByIdProvider(bookId)` (a **family** provider — one provider instance per id) |
+| [`data/datasources/book_local_datasource.dart`](lib/features/books/data/datasources/book_local_datasource.dart) | data | The mock **and the mutable store** — see below. Swap point for real HTTP |
+| [`assets/data/books.json`](assets/data/books.json) | data (asset) | 6 sample books — the only place catalog values exist |
+| [`data/repositories/book_repository_impl.dart`](lib/features/books/data/repositories/book_repository_impl.dart) | data | Catches datasource exceptions → `CacheFailure` |
+| [`presentation/providers/book_providers.dart`](lib/features/books/presentation/providers/book_providers.dart) + `.g.dart` | presentation | All wiring; exposes `bookListProvider`, `bookSearchProvider(query)`, `bookByIdProvider(id)` |
+| [`presentation/screens/books_screen.dart`](lib/features/books/presentation/screens/books_screen.dart) | presentation | The Books tab — debounced search, All/Available chips, 2-column grid |
+| [`presentation/screens/book_details_screen.dart`](lib/features/books/presentation/screens/book_details_screen.dart) | presentation | Takes only a `bookId`, never a `Book` |
+| [`presentation/widgets/book_card.dart`](lib/features/books/presentation/widgets/book_card.dart) | presentation | Shared card — `showAvailability` on for the grid, off for Home's row |
+| [`presentation/widgets/borrow_confirmation_sheet.dart`](lib/features/books/presentation/widgets/borrow_confirmation_sheet.dart) | presentation | Lives here but calls **`borrowings`**' usecase — see §5 |
 
-This mirrors `CleanArchitectureDemo`'s own `book` feature almost file-for-file — the closest parity of anything built so far, since that demo's entire purpose is this exact feature. Only real deviation: `id` is `String` (matches our backend contract's UUID shape) instead of the demo's `int`.
+### How the pieces connect
 
-No dedicated Books *screen* yet (grid/search/filter chips, design doc §30) — `bookListProvider` currently only feeds Home's Recommended row. Building the Books tab screen is just UI work against a provider that already exists and works.
+```mermaid
+flowchart TD
+    JSON["assets/data/books.json"]
+    DS["BookLocalDatasourceImpl<br/>_cache: List&lt;BookModel&gt;?<br/>(keepAlive — mutable, session-long)"]
+    REPO["BookRepositoryImpl"]
 
-### Runtime flow — `ref.watch(bookListProvider)`
+    GB["GetBooks"]
+    SB["SearchBooks"]
+    GBID["GetBookById"]
+
+    PL["bookListProvider"]
+    PS["bookSearchProvider(query)<br/>family"]
+    PID["bookByIdProvider(id)<br/>family"]
+
+    HOME["home_screen.dart<br/>Recommended row"]
+    BOOKS["books_screen.dart<br/>grid + search"]
+    DETAILS["book_details_screen.dart"]
+
+    BORROW["borrowings<br/>BorrowingLocalDatasourceImpl"]
+
+    JSON -->|loaded once| DS
+    DS --> REPO
+    REPO --> GB & SB & GBID
+    GB --> PL
+    SB --> PS
+    GBID --> PID
+    PL -.watched by.-> HOME
+    PS -.watched by.-> BOOKS
+    PID -.watched by.-> DETAILS
+    BORROW -->|"decrement/incrementAvailableCopies"| DS
+
+    style DS fill:#F1E8FF,stroke:#832DFE
+```
+
+Two things to read off this:
+
+1. **One datasource instance, three usecases, three providers.** `bookLocalDataSourceProvider` is `keepAlive: true`, so `_cache` is loaded once and lives for the session — which is what makes borrow/return persist.
+2. **`borrowings` writes into it.** `decrementAvailableCopies`/`incrementAvailableCopies` exist only for that, and they're the reason the cache has to be mutable (§5 explains why it's a datasource→datasource dependency).
+
+### Use case 1 — browse and search (`books_screen.dart`)
+
+Search is **not** widget-level filtering; it goes through the full chain, so swapping the mock for `?search=` is a datasource change only.
 
 ```mermaid
 sequenceDiagram
-    participant S as any screen<br/>(e.g. home_screen.dart)
-    participant P as book_providers.dart<br/>(BookList)
-    participant UC as domain/usecases/<br/>get_books.dart
-    participant R as data/repositories/<br/>book_repository_impl.dart
-    participant D as data/datasources/<br/>book_local_datasource.dart
-    participant J as assets/data/books.json
+    participant U as User
+    participant S as books_screen.dart
+    participant P as bookSearchProvider(query)
+    participant UC as SearchBooks
+    participant R as BookRepositoryImpl
+    participant D as BookLocalDatasourceImpl
 
-    S->>P: ref.watch(bookListProvider)
-    Note over S: shows a spinner while<br/>state is AsyncLoading
-    P->>UC: call(NoParams())
-    UC->>R: repository.getBooks()
-    R->>D: localDataSource.getBooks()
-    D-->>D: await 600ms (simulated delay)
-    D->>J: rootBundle.loadString(...)
-    J-->>D: raw JSON array
-    D-->>D: json.decode + map to List<BookModel>
-    D-->>R: List<BookModel>  (is-a List<Book>)
-    R-->>UC: Right(books)  — or Left(CacheFailure) on exception
-    UC-->>P: Either<Failure, List<Book>> (passed through unchanged)
-    P->>P: result.match(throw failure, (books) => books)
-    Note over P: throw → AsyncNotifier auto-converts to AsyncError
-    P-->>S: AsyncData(books) or AsyncError(...)
-    S->>S: booksAsync.when(loading/error/data) → renders cards
+    U->>S: types "wit"
+    S->>S: _onQueryChanged — 300ms timer resets
+    Note over S: no request yet
+    U->>S: stops typing
+    S->>S: setState(_query = "wit")
+    S->>P: ref.watch(bookSearchProvider("wit"))
+    P->>UC: call("wit")
+    UC->>R: searchBooks("wit")
+    R->>D: searchBooks("wit")
+    D-->>D: _load() (cached), match title/author
+    D-->>R: List<BookModel>
+    R-->>P: Right(books)
+    P-->>S: AsyncData(books)
+    S->>S: _applyAvailabilityFilter (chip, client-side)
+    S->>S: grid of BookCard
 ```
 
-Every arrow here only ever points toward `domain` (same rule as `auth`'s trace, §2) — `GetBooks` never knows JSON exists, `BookLocalDatasourceImpl` never knows Riverpod exists.
+Note the split: **the query is a server concern** (goes through the chain), **the Available chip is not** — `?availableOnly=` isn't in the contract yet, so it filters the returned list locally.
+
+### Use case 2 — book details
+
+`bookByIdProvider` is a **family**: `bookByIdProvider('book-001')` and `bookByIdProvider('book-002')` are separate cached instances. `BookDetailsScreen` takes only the id, never the whole object — so it works identically whether reached from the grid, Home, or (later) a deep link.
+
+```mermaid
+sequenceDiagram
+    participant S as book_details_screen.dart
+    participant P as bookByIdProvider(id)
+    participant UC as GetBookById
+    participant D as BookLocalDatasourceImpl
+
+    S->>P: ref.watch(bookByIdProvider('book-001'))
+    P->>UC: call('book-001')
+    UC->>D: (via repository) getBookById
+    D-->>D: firstWhere on the cache
+    D-->>P: Right(book) / Left(CacheFailure)
+    P-->>S: AsyncData(book)
+    S->>S: body = _BookDetailsBody(book)
+    S->>S: bottomNavigationBar = _BorrowBar(book)
+    Note over S: Borrow button disabled when<br/>availableCopies == 0
+```
+
+### Use case 3 — the borrow entry point
+
+`borrow_confirmation_sheet.dart` sits in `books/` because that's where it's opened from, but it belongs to the borrowing flow: it calls `borrowings`' `BorrowBook` usecase, then invalidates everything that displayed the old numbers.
+
+```mermaid
+flowchart LR
+    BAR["_BorrowBar<br/>book_details_screen"] -->|"showBorrowConfirmationSheet(book)"| SHEET["BorrowConfirmationSheet"]
+    SHEET -->|"borrowBookUseCaseProvider"| BB["borrowings: BorrowBook"]
+    BB --> DEC["decrementAvailableCopies"]
+    SHEET -->|on success| INV["ref.invalidate ×5"]
+    INV --> P1["bookByIdProvider(id)"]
+    INV --> P2["bookListProvider"]
+    INV --> P3["bookSearchProvider"]
+    INV --> P4["activeBorrowingsProvider"]
+    INV --> P5["borrowingListProvider(active)"]
+```
+
+The five invalidations are why the new availability appears everywhere at once — Book Details, Home's row, the Books grid, and both borrowing views — without any screen knowing about any other.
+
+### The rule that holds throughout
+
+Every arrow points toward `domain`. `SearchBooks` never knows JSON exists; `BookLocalDatasourceImpl` never knows Riverpod exists. That's what makes the eventual HTTP swap a one-file change.
 
 ## 4. Feature: `home` dashboard (built)
 

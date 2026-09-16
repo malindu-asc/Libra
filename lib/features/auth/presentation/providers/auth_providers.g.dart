@@ -57,6 +57,54 @@ final class AuthLocalDataSourceProvider
 String _$authLocalDataSourceHash() =>
     r'6df90b7f7280d4659ef365bb74160502b2a36c1c';
 
+@ProviderFor(authSessionStorage)
+final authSessionStorageProvider = AuthSessionStorageProvider._();
+
+final class AuthSessionStorageProvider
+    extends
+        $FunctionalProvider<
+          AuthSessionStorage,
+          AuthSessionStorage,
+          AuthSessionStorage
+        >
+    with $Provider<AuthSessionStorage> {
+  AuthSessionStorageProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'authSessionStorageProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$authSessionStorageHash();
+
+  @$internal
+  @override
+  $ProviderElement<AuthSessionStorage> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AuthSessionStorage create(Ref ref) {
+    return authSessionStorage(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AuthSessionStorage value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AuthSessionStorage>(value),
+    );
+  }
+}
+
+String _$authSessionStorageHash() =>
+    r'0af644ca6ab5ff0b7995a35542a9f9c3d33b436f';
+
 @ProviderFor(authRepository)
 final authRepositoryProvider = AuthRepositoryProvider._();
 
@@ -96,7 +144,7 @@ final class AuthRepositoryProvider
   }
 }
 
-String _$authRepositoryHash() => r'744982724a70fd2589a2f1cbce6da7d77e1b011e';
+String _$authRepositoryHash() => r'6777f6074038439529019e312c2497e28921bf26';
 
 @ProviderFor(loginUseCase)
 final loginUseCaseProvider = LoginUseCaseProvider._();
@@ -263,6 +311,48 @@ final class LogoutUseCaseProvider
 
 String _$logoutUseCaseHash() => r'9dad12162a83228303546bc3426be5e3d03b3d81';
 
+@ProviderFor(restoreSessionUseCase)
+final restoreSessionUseCaseProvider = RestoreSessionUseCaseProvider._();
+
+final class RestoreSessionUseCaseProvider
+    extends $FunctionalProvider<RestoreSession, RestoreSession, RestoreSession>
+    with $Provider<RestoreSession> {
+  RestoreSessionUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'restoreSessionUseCaseProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$restoreSessionUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<RestoreSession> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  RestoreSession create(Ref ref) {
+    return restoreSessionUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(RestoreSession value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<RestoreSession>(value),
+    );
+  }
+}
+
+String _$restoreSessionUseCaseHash() =>
+    r'1ba05d8a62afeb7037d4a05eae28f333513189a9';
+
 @ProviderFor(LoginController)
 final loginControllerProvider = LoginControllerProvider._();
 
@@ -287,7 +377,7 @@ final class LoginControllerProvider
   LoginController create() => LoginController();
 }
 
-String _$loginControllerHash() => r'6d4cafd252619193dd6b7c0722af6408a4969328';
+String _$loginControllerHash() => r'238370f781cfbee33eb258eddadeee2ca29f054f';
 
 abstract class _$LoginController extends $AsyncNotifier<AuthSession?> {
   FutureOr<AuthSession?> build();
@@ -332,7 +422,7 @@ final class RegisterControllerProvider
 }
 
 String _$registerControllerHash() =>
-    r'2fd2cd411dd7f79b9b7f742c8b8d0ad418cf8274';
+    r'9fdacd459bc6e6a39a13c3c435e072a8d802ce3c';
 
 abstract class _$RegisterController extends $AsyncNotifier<bool> {
   FutureOr<bool> build();
@@ -377,7 +467,7 @@ final class ForgotPasswordControllerProvider
 }
 
 String _$forgotPasswordControllerHash() =>
-    r'40f2b2c98d58e3a95f7179209e6d48c03ad011fb';
+    r'0d593c85471ee27ea8259d69f6f090a2b8176998';
 
 abstract class _$ForgotPasswordController extends $AsyncNotifier<bool> {
   FutureOr<bool> build();

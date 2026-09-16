@@ -21,6 +21,16 @@ class BookRepositoryImpl implements BookRepository {
   }
 
   @override
+  Future<Either<Failure, List<Book>>> searchBooks(String query) async {
+    try {
+      final models = await localDataSource.searchBooks(query);
+      return Right(models);
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, Book>> getBookById(String id) async {
     try {
       final model = await localDataSource.getBookById(id);

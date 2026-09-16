@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/providers/main_shell_providers.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -60,6 +61,7 @@ class _BorrowConfirmationSheetState
         ref.invalidate(activeBorrowingsProvider);
         ref.invalidate(bookByIdProvider(widget.book.id));
         ref.invalidate(bookListProvider);
+        ref.invalidate(bookSearchProvider);
         ref.invalidate(borrowingListProvider(BorrowingStatus.active));
         setState(() {
           _isSubmitting = false;
@@ -69,16 +71,16 @@ class _BorrowConfirmationSheetState
     );
   }
 
+  // One `go` replaces the old "pop the sheet, then pop Book Details" pair —
+  // it resolves the whole location rather than guessing how deep the stack is.
   void _goToMyBorrowings() {
-    ref.read(mainShellTabIndexProvider.notifier).select(2);
     Navigator.of(context).pop(); // close the sheet
-    Navigator.of(context).pop(); // close Book Details, back to MainShell
+    context.go('/borrowings');
   }
 
   void _backToHome() {
-    ref.read(mainShellTabIndexProvider.notifier).select(0);
     Navigator.of(context).pop(); // close the sheet
-    Navigator.of(context).pop(); // close Book Details, back to MainShell
+    context.go('/home');
   }
 
   @override

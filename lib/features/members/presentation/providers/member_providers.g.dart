@@ -299,7 +299,7 @@ final class UpdateProfileControllerProvider
 }
 
 String _$updateProfileControllerHash() =>
-    r'3dbe8eef984d5024d7e9c6f4cc053ae664f85d30';
+    r'03332c5c09ee13bbacbbc5b8dfc34fdd5e7d311a';
 
 abstract class _$UpdateProfileController extends $AsyncNotifier<bool> {
   FutureOr<bool> build();
@@ -344,7 +344,7 @@ final class ChangePasswordControllerProvider
 }
 
 String _$changePasswordControllerHash() =>
-    r'870e6b5b2f91ec25b473cd6255a9e964af2a8756';
+    r'85954153336373a26b1f92ac612853937799e49e';
 
 abstract class _$ChangePasswordController extends $AsyncNotifier<bool> {
   FutureOr<bool> build();

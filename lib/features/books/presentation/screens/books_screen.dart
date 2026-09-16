@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -9,7 +12,6 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../domain/entities/book.dart';
 import '../providers/book_providers.dart';
 import '../widgets/book_card.dart';
-import 'book_details_screen.dart';
 
 class BooksScreen extends ConsumerStatefulWidget {
   const BooksScreen({super.key});
@@ -20,30 +22,34 @@ class BooksScreen extends ConsumerStatefulWidget {
 
 class _BooksScreenState extends ConsumerState<BooksScreen> {
   final _searchController = TextEditingController();
+  Timer? _debounce;
   String _query = '';
   bool _availableOnly = false;
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<Book> _filter(List<Book> books) {
-    final query = _query.trim().toLowerCase();
-    return books.where((book) {
-      final matchesQuery =
-          query.isEmpty ||
-          book.title.toLowerCase().contains(query) ||
-          book.author.toLowerCase().contains(query);
-      final matchesAvailability = !_availableOnly || book.availableCopies > 0;
-      return matchesQuery && matchesAvailability;
-    }).toList();
+  /// Debounced by 300ms
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _query = value);
+    });
   }
+
+  /// `?availableOnly=` isn't in the backend contract yet (plan.md §4 lists it
+  /// as a later addition), so this one stays client-side for now.
+  List<Book> _applyAvailabilityFilter(List<Book> books) => _availableOnly
+      ? books.where((book) => book.availableCopies > 0).toList()
+      : books;
 
   @override
   Widget build(BuildContext context) {
-    final booksAsync = ref.watch(bookListProvider);
+    final booksAsync = ref.watch(bookSearchProvider(_query));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -58,7 +64,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
             const SizedBox(height: AppSpacing.sm),
             TextField(
               controller: _searchController,
-              onChanged: (value) => setState(() => _query = value),
+              onChanged: _onQueryChanged,
               decoration: InputDecoration(
                 hintText: 'Search books or authors...',
                 prefixIcon: const Icon(Icons.search),
@@ -91,23 +97,16 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
               child: booksAsync.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator.adaptive()),
-                error: (error, _) =>
-                    AppErrorState(onRetry: () => ref.invalidate(bookListProvider)),
+                error: (error, _) => AppErrorState(
+                  onRetry: () => ref.invalidate(bookSearchProvider(_query)),
+                ),
                 data: (books) {
-                  final filtered = _filter(books);
+                  final filtered = _applyAvailabilityFilter(books);
                   if (filtered.isEmpty) {
-                    return AppEmptyState(
+                    return const AppEmptyState(
                       icon: Icons.search_off,
                       title: 'No books found',
                       message: 'Try a different title or author.',
-                      actionLabel: (_query.isEmpty && !_availableOnly)
-                          ? null
-                          : 'Clear Search',
-                      onAction: () => setState(() {
-                        _searchController.clear();
-                        _query = '';
-                        _availableOnly = false;
-                      }),
                     );
                   }
                   return Column(
@@ -132,13 +131,8 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
                               ),
                           itemBuilder: (context, index) => BookCard(
                             book: filtered[index],
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => BookDetailsScreen(
-                                  bookId: filtered[index].id,
-                                ),
-                              ),
-                            ),
+                            onTap: () =>
+                                context.push('/books/${filtered[index].id}'),
                           ),
                         ),
                       ),

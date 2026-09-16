@@ -18,4 +18,13 @@ class AuthSessionModel extends AuthSession {
           json['member'] as Map<String, dynamic>,
         ),
       );
+
+  /// Only used to persist the session on-device — the client never sends a
+  /// session back to the API.
+  Map<String, dynamic> toJson() => {
+    'accessToken': accessToken,
+    'refreshToken': refreshToken,
+    'expiresAt': expiresAt.toIso8601String(),
+    'member': (member as AuthenticatedMemberModel).toJson(),
+  };
 }

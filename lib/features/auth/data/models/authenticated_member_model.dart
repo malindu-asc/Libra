@@ -13,4 +13,10 @@ class AuthenticatedMemberModel extends AuthenticatedMember {
         fullName: json['fullName'] as String,
         email: json['email'] as String,
       );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'fullName': fullName,
+    'email': email,
+  };
 }

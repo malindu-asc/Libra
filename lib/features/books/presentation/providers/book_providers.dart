@@ -7,6 +7,7 @@ import '../../domain/entities/book.dart';
 import '../../domain/repositories/book_repository.dart';
 import '../../domain/usecases/get_book_by_id.dart';
 import '../../domain/usecases/get_books.dart';
+import '../../domain/usecases/search_books.dart';
 
 part 'book_providers.g.dart';
 
@@ -35,8 +36,21 @@ class BookList extends _$BookList {
 }
 
 @riverpod
+SearchBooks searchBooksUseCase(Ref ref) =>
+    SearchBooks(ref.watch(bookRepositoryProvider));
+
+/// One cached instance per query string. The Books screen debounces before
+/// changing the query, so this isn't rebuilt on every keystroke.
+@riverpod
+Future<List<Book>> bookSearch(Ref ref, String query) async {
+  final useCase = ref.read(searchBooksUseCaseProvider);
+  final result = await useCase(query);
+  return result.match((failure) => throw failure, (books) => books);
+}
+
+@riverpod
 GetBookById getBookByIdUseCase(Ref ref) => ////use the same repository
-    GetBookById(ref.watch(bookRepositoryProvider)); 
+    GetBookById(ref.watch(bookRepositoryProvider));
 
 @riverpod 
 Future<Book> bookById(Ref ref, String id) async { //provide the data for books_detailsdart

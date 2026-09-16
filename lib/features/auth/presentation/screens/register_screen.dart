@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -47,9 +48,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  void _goToLogin() {
-    Navigator.of(context).pop();
-  }
+  void _goToLogin() => context.pop();
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +66,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 content: Text('Account created! Please log in.'),
               ),
             );
-          Navigator.of(context).pop();
+          context.pop();
         },
       );
     });
