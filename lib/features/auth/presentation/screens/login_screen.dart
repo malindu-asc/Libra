@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../providers/auth_providers.dart';
 
 //referpod basically has listen,watch and read
+
 // ref.read = trigger actions tell controller to execute function(no listeinig, or update changes)
 //ref.watch = rebuild the ui's,monitor state changes, force to flutter widget to rebuild.
 //ref.listen- trigger one time action in backgroud

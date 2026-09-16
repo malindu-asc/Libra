@@ -19,7 +19,7 @@ part 'auth_providers.g.dart';
 AuthLocalDataSource authLocalDataSource(Ref ref) => AuthLocalDatasourceImpl();
 
 @Riverpod(keepAlive: true)
-AuthSessionStorage authSessionStorage(Ref ref) =>
+AuthSessionStorage authSessionStorage(Ref ref) => //inject
     const AuthSessionStorage(FlutterSecureStorage());
 
 @Riverpod(keepAlive: true)
@@ -47,7 +47,7 @@ Logout logoutUseCase(Ref ref) =>
 RestoreSession restoreSessionUseCase(Ref ref) =>
     RestoreSession(ref.watch(authRepositoryProvider));
 
-@riverpod
+@riverpod //login call
 class LoginController extends _$LoginController {
   @override
   FutureOr<AuthSession?> build() => null;
@@ -74,7 +74,7 @@ class LoginController extends _$LoginController {
   }
 }
 
-@riverpod
+@riverpod //register call
 class RegisterController extends _$RegisterController {
   @override
   FutureOr<bool> build() => false;

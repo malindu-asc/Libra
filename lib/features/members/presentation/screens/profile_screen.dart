@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/providers/main_shell_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -38,7 +37,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> { //login state m
     // Session state is cleared regardless of what the server said — the
     // member asked to leave, so the app must stop showing their data.
     ref.read(currentMemberProvider.notifier).clear();
-    ref.read(mainShellTabIndexProvider.notifier).select(0);
 
     // `go` discards the whole stack — replaces pushAndRemoveUntil.
     context.go('/login');

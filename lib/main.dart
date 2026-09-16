@@ -9,17 +9,17 @@ void main() {
   runApp(const ProviderScope(child: LibzoApp()));
 }
 
-class LibzoApp extends StatelessWidget {
+class LibzoApp extends ConsumerWidget {
   const LibzoApp({super.key});
 
   @override
-  Widget build(BuildContext context) => MaterialApp.router(
+  Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(
     debugShowCheckedModeBanner: false,
     themeMode: ThemeMode.light,
     theme: AppTheme.light,
     supportedLocales: L10n.supportedLocales,
     localizationsDelegates: L10n.localizationsDelegates,
     onGenerateTitle: (context) => L10n.of(context).appTitle,
-    routerConfig: appRouter,
+    routerConfig: ref.watch(appRouterProvider),
   );
 }
