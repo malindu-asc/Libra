@@ -62,6 +62,7 @@ class _ReturnConfirmationSheetState
         ref.invalidate(activeBorrowingsProvider);
         ref.invalidate(bookByIdProvider(widget.item.bookId));
         ref.invalidate(bookListProvider);
+        ref.invalidate(bookSearchProvider);
         setState(() {
           _isSubmitting = false;
           _didReturn = true;
@@ -184,10 +185,10 @@ class _ReturnConfirmationSheetState
         width: 72,
         height: 72,
         decoration: const BoxDecoration(
-          color: AppColors.successSoft,
+          color: Color.fromARGB(255, 55, 206, 121),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check, color: AppColors.success, size: 36),
+        child: const Icon(Icons.check_rounded, color: Colors.white, size: 40),
       ),
       const SizedBox(height: AppSpacing.md),
       Text(
