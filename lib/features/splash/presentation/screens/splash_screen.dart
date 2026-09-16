@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../onboarding/presentation/screens/onboarding_screen.dart';
 import '../widgets/loading_dots.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,11 +24,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void _navigateNext() {
     if (!mounted) return;
-    // TODO: replace with the real next route once it exists
-    // (onboarding on first launch, otherwise login/home).
-    // Navigator.of(context).pushReplacement(
-    //   MaterialPageRoute(builder: (_) => const LoginScreen()),
-    // );
+    // TODO: skip onboarding on repeat launches once login/session state
+    // exists — for now it's always shown after splash.
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const OnboardingScreen()));
   }
 
   @override

@@ -134,15 +134,24 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
       ),
 
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: const Color(0xFF8A8A8A),
-        selectedLabelStyle: AppTextStyles.metadata,
-        unselectedLabelStyle: AppTextStyles.metadata,
-        type: BottomNavigationBarType.fixed,
+        indicatorColor: AppColors.primarySoft,
         elevation: 0,
-        showUnselectedLabels: true,
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => AppTextStyles.metadata.copyWith(
+            color: states.contains(WidgetState.selected)
+                ? AppColors.primary
+                : const Color(0xFF8A8A8A),
+          ),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? AppColors.primary
+                : const Color(0xFF8A8A8A),
+          ),
+        ),
       ),
 
       dividerTheme: const DividerThemeData(

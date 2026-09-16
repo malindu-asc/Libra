@@ -1,0 +1,20 @@
+[
+  {
+    "id": "member-001",
+    "fullName": "Malindu P",
+    "email": "malindu@example.com",
+    "phoneNumber": "0771234567",
+    "registeredDate": "2026-03-14T09:20:00.000Z",
+    "isActive": true,
+    "password": "Password123!"
+  },
+  {
+    "id": "member-002",
+    "fullName": "Test Smith",
+    "email": "test@example.com",
+    "phoneNumber": "0779876543",
+    "registeredDate": "2026-06-02T14:05:00.000Z",
+    "isActive": true,
+    "password": "Password123!"
+  }
+]
