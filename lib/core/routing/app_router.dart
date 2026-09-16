@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../../features/books/presentation/screens/book_details_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -34,5 +35,10 @@ final appRouter = GoRouter(
     // MainShell still owns its own IndexedStack and tab-index provider for
     // now — it becomes a StatefulShellRoute in a later step.
     GoRoute(path: '/home', builder: (context, state) => const MainShell()),
+    GoRoute(
+      path: '/books/:id',
+      builder: (context, state) =>
+          BookDetailsScreen(bookId: state.pathParameters['id']!),
+    ),
   ],
 );

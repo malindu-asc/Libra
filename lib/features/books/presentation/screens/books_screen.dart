@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -11,7 +12,6 @@ import '../../../../core/widgets/app_error_state.dart';
 import '../../domain/entities/book.dart';
 import '../providers/book_providers.dart';
 import '../widgets/book_card.dart';
-import 'book_details_screen.dart';
 
 class BooksScreen extends ConsumerStatefulWidget {
   const BooksScreen({super.key});
@@ -33,10 +33,7 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
     super.dispose();
   }
 
-  /// Debounced by 300ms: the query keys `bookSearchProvider`, so committing
-  /// it on every keystroke would spin up a provider instance and fire a
-  /// search per character — typing "witch" would run five. The timer resets
-  /// on each keystroke and only fires once typing pauses.
+  /// Debounced by 300ms
   void _onQueryChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
@@ -134,13 +131,8 @@ class _BooksScreenState extends ConsumerState<BooksScreen> {
                               ),
                           itemBuilder: (context, index) => BookCard(
                             book: filtered[index],
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => BookDetailsScreen(
-                                  bookId: filtered[index].id,
-                                ),
-                              ),
-                            ),
+                            onTap: () =>
+                                context.push('/books/${filtered[index].id}'),
                           ),
                         ),
                       ),
