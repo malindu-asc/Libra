@@ -2,6 +2,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/books/presentation/screens/book_details_screen.dart';
+import '../../features/members/presentation/screens/change_password_screen.dart';
+import '../../features/members/presentation/screens/edit_profile_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -39,6 +41,14 @@ final appRouter = GoRouter(
       path: '/books/:id',
       builder: (context, state) =>
           BookDetailsScreen(bookId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/profile/edit',
+      builder: (context, state) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: '/profile/password',
+      builder: (context, state) => const ChangePasswordScreen(),
     ),
   ],
 );

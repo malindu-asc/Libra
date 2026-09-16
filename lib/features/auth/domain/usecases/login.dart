@@ -12,12 +12,12 @@ class LoginParams {
   final String password;
 }
 
-class Login implements UseCase<AuthSession, LoginParams> {
+class Login implements UseCase<AuthSession, LoginParams> { //auth.provider call authrepository
   const Login(this.repository);
 
   final AuthRepository repository;
 
-  @override
+  @override 
   Future<Either<Failure, AuthSession>> call(LoginParams params) =>
       repository.login(email: params.email, password: params.password);
 }

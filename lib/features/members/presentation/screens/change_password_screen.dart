@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -55,7 +56,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             title: 'Password Updated!',
             message: 'Use your new password the next time you sign in.',
           );
-          if (context.mounted) Navigator.of(context).pop();
+          if (context.mounted) context.pop();
         },
         error: (error, _) => ScaffoldMessenger.of(
           context,

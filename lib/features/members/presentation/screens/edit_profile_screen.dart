@@ -1,25 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_error_state.dart';
 import '../../domain/entities/member.dart';
 import '../providers/member_providers.dart';
 import '../widgets/profile_success_dialog.dart';
 
-/// Takes the already-loaded [Member] rather than refetching it — Profile has
-/// it in hand, and prefilled fields shouldn't wait on a second round trip.
-class EditProfileScreen extends ConsumerStatefulWidget {
-  const EditProfileScreen({required this.member, super.key});
+/// A route can't carry a [Member] object, so this reads it from the provider
+/// instead of taking it as an argument. The loading branch effectively never
+/// shows — Profile is still mounted underneath keeping `myProfileProvider`
+/// warm, so the value is already cached.
+class EditProfileScreen extends ConsumerWidget {
+  const EditProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      ref.watch(myProfileProvider).when(
+        loading: () => const Scaffold(
+          body: Center(child: CircularProgressIndicator.adaptive()),
+        ),
+        error: (error, _) => Scaffold(
+          body: AppErrorState(
+            onRetry: () => ref.invalidate(myProfileProvider),
+          ),
+        ),
+        data: (member) => _EditProfileForm(member: member),
+      );
+}
+
+class _EditProfileForm extends ConsumerStatefulWidget {
+  const _EditProfileForm({required this.member});
 
   final Member member;
 
   @override
-  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<_EditProfileForm> createState() => _EditProfileFormState();
 }
 
-class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+class _EditProfileFormState extends ConsumerState<_EditProfileForm> {
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   final _formKey = GlobalKey<FormState>();
@@ -61,7 +83,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             title: 'Profile Updated!',
             message: 'Your personal information has been saved successfully.',
           );
-          if (context.mounted) Navigator.of(context).pop();
+          if (context.mounted) context.pop();
         },
         error: (error, _) => ScaffoldMessenger.of(
           context,

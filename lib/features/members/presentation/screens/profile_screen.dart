@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/main_shell_providers.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -10,13 +11,10 @@ import '../../../../core/usecase/usecase.dart';
 import '../../../../core/widgets/app_error_state.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/presentation/providers/current_member_provider.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../borrowings/domain/entities/borrowing.dart';
 import '../../../borrowings/presentation/providers/borrowings_providers.dart';
 import '../../domain/entities/member.dart';
 import '../providers/member_providers.dart';
-import 'change_password_screen.dart';
-import 'edit_profile_screen.dart';
 
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -42,10 +40,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> { //login state m
     ref.read(currentMemberProvider.notifier).clear();
     ref.read(mainShellTabIndexProvider.notifier).select(0);
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+    // `go` discards the whole stack — replaces pushAndRemoveUntil.
+    context.go('/login');
   }
 
   @override
@@ -69,21 +65,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> { //login state m
               _SettingsTile(
                 icon: Icons.person_outline,
                 label: 'Edit Profile',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => EditProfileScreen(member: member),
-                  ),
-                ),
+                onTap: () => context.push('/profile/edit'),
               ),
               const SizedBox(height: AppSpacing.sm),
               _SettingsTile(
                 icon: Icons.lock_outline,
                 label: 'Change Password',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const ChangePasswordScreen(),
-                  ),
-                ),
+                onTap: () => context.push('/profile/password'),
               ),
               const SizedBox(height: AppSpacing.section),
               Padding(
