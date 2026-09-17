@@ -26,6 +26,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  // Stay quiet until the first submit; after that, re-check as the user
+  // fixes the fields.
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -37,7 +41,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _createAccount() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+      return;
+    }
     // Sends fullName, email, phoneNumber, password only — never role/
     // memberId/isActive, those are server-controlled (backend contract §2).
     ref.read(registerControllerProvider.notifier).submit(
@@ -95,7 +102,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
             child: Form(
               key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
+              autovalidateMode: _autovalidateMode,
               child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
