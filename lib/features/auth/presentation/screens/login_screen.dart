@@ -29,6 +29,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  // Stay quiet until the first submit; after that, re-check as the user
+  // fixes the fields.
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -37,7 +41,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
  //login function basically calls relater controller the login usecase and updates the state of the login controller
   void _login() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+      return;
+    }
     ref.read(loginControllerProvider.notifier).submit(
       email: _emailController.text.trim(),
       password: _passwordController.text,
@@ -86,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               child: Form(
                 key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
+                autovalidateMode: _autovalidateMode,
                 child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
